@@ -25,12 +25,22 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "pip>=24.2",
-    "lxml>=5.2.2",
-    "pytest>=8.3.2",
-    "ruff>=0.5.5",
+    "lxml>=6.1.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
     "radon>=6.0.1",
-    "ansible-lint>=24.7.0",
+    "ansible-lint>=26.4.0",
+    "pytest-forked>=1.6.0",
+    "pytest-xdist>=3.8.0",
+]
+
+[dependency-groups]
+dev = [
+    "lxml>=6.1.0",
+    "pytest>=9.0.3",
+    "ruff>=0.15.12",
+    "radon>=6.0.1",
+    "ansible-lint>=26.4.0",
     "pytest-forked>=1.6.0",
     "pytest-xdist>=3.8.0",
 ]

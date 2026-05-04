@@ -58,27 +58,26 @@
    `ansible_collections/fsas/primergy`というディレクトリ階層でcloneされている必要があります。
 
 2. PythonおよびAnsible実行環境の構築を行います。
-   [Rye](https://rye.astral.sh/) でPythonプロジェクト環境を記述していますので、
-   `rye`コマンドを使って環境構築を行うのが最も簡単です。
-   `rye`コマンドのインストールについては <https://rye.astral.sh/guide/installation/> を参照してください。
-   RyeはPythonインタープリタのダウンロードも行いますので、Python実行環境を用意する必要はありません。
+   [uv](https://docs.astral.sh/uv/) でPythonプロジェクト環境を記述していますので、
+   `uv`コマンドを使って環境構築を行うのが最も簡単です。
+   `uv`コマンドのインストールについては <https://docs.astral.sh/uv/getting-started/installation/> を参照してください。
+   uvはPythonインタープリタのダウンロードも行いますので、Python実行環境を用意する必要はありません。
 
    ```shell
-   $ rye sync
-   Initializing new virtualenv in ~/git/ansible_collections/fsas/primergy/.venv
-   Python version: cpython@3.10.14
+   $ uv sync --dev
+   Using CPython 3.10.14
+   Creating virtual environment at: .venv
    （略）
-   Done!  
    ```
-  
-   Ryeを使って環境構築した場合、
-   インストールしたコマンドは`rye`コマンド経由で実行するか、
-   `rye sync`によって生成された仮想環境を有効化して実行します。
+
+   uvを使って環境構築した場合、
+   インストールしたコマンドは`uv run`コマンド経由で実行するか、
+   `uv sync`によって生成された仮想環境を有効化して実行します。
 
    ```shell
-   # ryeから実行
-   rye run python -V
-   rye run ansible --version
+   # uvから実行
+   uv run python -V
+   uv run ansible --version
    ```
 
    ```shell
@@ -90,7 +89,7 @@
 
    ---
 
-   Ryeを使わず環境構築する場合はPython3.10以降のPython実行環境を用意してください。
+   uvを使わず環境構築する場合はPython3.10以降のPython実行環境を用意してください。
    仮想環境（venv）を作成・有効化してから、必要なライブラリをインストールしてください。
 
    ```shell
@@ -99,6 +98,16 @@
    $ python -m venv .venv
    $ . .venv/bin/activate
    (.venv) $ python -m pip install -r requirements.lock -r requirements-dev.lock
+   ```
+
+   ---
+
+   パッケージの依存関係を追加・変更した場合は、以下のコマンドでロックファイルを更新してください。
+
+   ```shell
+   uv lock
+   uv export --no-hashes --no-dev -o requirements.lock
+   uv export --no-hashes -o requirements-dev.lock
    ```
 
 3. `ansible.cfg`ファイルに、`ansible_collections`ディレクトリがあるディレクトリを指定してください。
@@ -262,7 +271,7 @@
 - `ansible-test`によるユニットテストの実行方法は以下の通りです：
 
   ```shell
-  rye run ansible-test units --python 3.10
+  uv run ansible-test units --python 3.10
   ```
 
 ---
