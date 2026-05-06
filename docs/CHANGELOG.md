@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [3.0.1] - 2026-05-07
+## [3.0.1] - 2026-05-11
 
 ### Changed
 
 - Changed Ansible collection namespace from `fujitsu.primergy` to `fsas.primergy`
 - Changed GitHub repository URL from `github.com/fujitsu/fujitsu-ansible-irmc-integration` to `github.com/fujitsu/ansible-irmc-integration`
 - Update dependent Python packages
-- Switches package manager from rye to uv
-  - 'rye sync' is still available, but using uv is recommended
+- Updated the development workflow to recommend uv instead of rye
+  - Existing `rye sync` workflows remain available for backward compatibility
 
 ## [3.0.0] - 2026-02-16
 
