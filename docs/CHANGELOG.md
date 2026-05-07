@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update dependent Python packages
 - Updated the development workflow to recommend uv instead of rye
   - Existing `rye sync` workflows remain available for backward compatibility
+- irmc_setvm module now allows to specify "HTTPS" for share_type
 
 ## [3.0.0] - 2026-02-16
 
