@@ -55,9 +55,9 @@ options:
         description: Name of the remote image.
         required:    true
     share_type:
-        description: Share type (NFS share or SMB share).
+        description: Share type (NFS, CIFS/SMB or HTTPS share).
         required:    false
-        choices:     ['NFS', 'SMB']
+        choices:     ['NFS', 'SMB', 'HTTPS']
     vm_domain:
         description: User domain in case of SMB share.
         required:    false
@@ -234,7 +234,7 @@ def main():
         server=dict(required=True, type='str'),
         share=dict(required=True, type='str'),
         image=dict(required=True, type='str'),
-        share_type=dict(required=False, type='str', choices=['NFS', 'SMB']),
+        share_type=dict(required=False, type='str', choices=['NFS', 'SMB', 'HTTPS']),
         vm_domain=dict(required=False, type='str'),
         vm_user=dict(required=False, type='str'),
         vm_password=dict(required=False, type='str', no_log=True),
