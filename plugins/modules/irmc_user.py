@@ -77,7 +77,7 @@ options:
             Some PRIMERGY models may have limited password strength.
         required:    false
     description:
-        description: User account desciption.
+        description: User account description.
         required:    false
     enabled:
         description: User account enabled.
@@ -214,8 +214,9 @@ EXAMPLES = r'''
     irmc_password: "{{ irmc_password }}"
     validate_certs: "{{ validate_certificate }}"
     command: "create"
-    name: "ansibleuser"
-    password: "StrongP@ssw0rd"
+    name: "{{ username | default('ansibleuser') }}"
+    password: "{{ password | default('StrongP@ssw0rd') }}"
+    description: "{{ description | default(omit) }}"
   delegate_to: localhost
   tags:
     - create
@@ -232,7 +233,7 @@ EXAMPLES = r'''
         irmc_password: "{{ irmc_password }}"
         validate_certs: "{{ validate_certificate }}"
         command: "get"
-        name: "ansibleuser"
+        name: "{{ username | default('ansibleuser') }}"
       register: user
       delegate_to: localhost
     - name: Show iRMC user details
@@ -247,8 +248,8 @@ EXAMPLES = r'''
     irmc_password: "{{ irmc_password }}"
     validate_certs: "{{ validate_certificate }}"
     command: "change"
-    name: "ansibleuser"
-    description: "ansible user description"
+    name: "{{ username | default('ansibleuser') }}"
+    description: "{{ description | default('ansible user description') }}"
   delegate_to: localhost
   tags:
     - change
@@ -261,7 +262,7 @@ EXAMPLES = r'''
     irmc_password: "{{ irmc_password }}"
     validate_certs: "{{ validate_certificate }}"
     command: "delete"
-    name: "ansibleuser"
+    name: "{{ username }}"
   delegate_to: localhost
   tags:
     - delete

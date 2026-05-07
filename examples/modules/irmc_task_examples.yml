@@ -48,7 +48,7 @@
           irmc_password: "{{ irmc_password }}"
           validate_certs: "{{ validate_certificate }}"
           command: "get"
-          id: 3
+          id: "{{ id | int }}"
         register: get
         delegate_to: localhost
       - name: Show specific task

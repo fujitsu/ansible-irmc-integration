@@ -37,11 +37,11 @@ Ansibleコレクションのセットアップ方法やロールの使用例、
 
 #### Pythonモジュール
 
-- `ansible` >= 8.0.0
+- `ansible` >= 10.7.0
 - `pywinrm` >= 0.5.0
-- `requests` >= 2.32.0
+- `requests` >= 2.33.1
 - `requests_toolbelt` >= 1.0.0
-- `urllib3` >= 2.5.0
+- `urllib3` >= 2.6.3
 
 ### Ansible実行環境のセットアップ
 
@@ -49,16 +49,16 @@ Pythonの仮想環境（venv）を作成・有効化してから、
 Ansibleを含む必要なPythonモジュールをインストールします：
 
 ```shell
-$ mkdir -p ~/ansible/primergy && cd $_  # 任意のディレクトリを作成し移動
-$ python -m venv venv && . $_/bin/activate
-(venv) $ python -m pip install ansible pywinrm requests requests_toolbelt urllib3
+mkdir -p ~/ansible/primergy && cd $_  # 任意のディレクトリを作成し移動
+python -m venv venv && . $_/bin/activate
+python -m pip install ansible pywinrm requests requests_toolbelt urllib3
 ```
 
 仮想環境（venv）にインストールしたAnsibleを使って、
 <https://galaxy.ansible.com/>からAnsibleコレクション`fsas.primergy`をインストールします：
 
 ```bash
-(venv) $ ansible-galaxy collection install fsas.primergy
+ansible-galaxy collection install fsas.primergy
 ```
 
 ### インベントリファイルの設定例

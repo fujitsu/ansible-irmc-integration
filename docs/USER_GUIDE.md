@@ -31,11 +31,11 @@ This document is intended for users with basic knowledge of Ansible.
 
 #### Python Modules
 
-- `ansible` >= 8.0.0
+- `ansible` >= 10.7.0
 - `pywinrm` >= 0.5.0
-- `requests` >= 2.32.0
+- `requests` >= 2.33.1
 - `requests_toolbelt` >= 1.0.0
-- `urllib3` >= 2.5.0
+- `urllib3` >= 2.6.3
 
 ### Setting Up Ansible Execution Environment
 
@@ -43,16 +43,16 @@ Create and activate a Python virtual environment (venv),
 then install the necessary Python modules including Ansible:
 
 ```shell
-$ mkdir -p ~/ansible/primergy && cd $_  # Create and move to a directory of your choice
-$ python -m venv venv && . $_/bin/activate
-(venv) $ python -m pip install ansible pywinrm requests requests_toolbelt urllib3
+mkdir -p ~/ansible/primergy && cd $_  # Create and move to a directory of your choice
+python -m venv venv && . $_/bin/activate
+python -m pip install ansible pywinrm requests requests_toolbelt urllib3
 ```
 
 Use Ansible installed in the virtual environment (venv)
 to install the Ansible collection `fsas.primergy` from <https://galaxy.ansible.com/>:
 
 ```bash
-(venv) $ ansible-galaxy collection install fsas.primergy
+ansible-galaxy collection install fsas.primergy
 ```
 
 ### Example Inventory File Configuration

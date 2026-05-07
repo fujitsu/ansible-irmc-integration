@@ -48,7 +48,7 @@
         command: "create"
         adapter: "{{ adapter }}"
         level: "{{ level }}"
-        name: "{{ name }}"
+        name: "{{ name | default(omit) }}"
       delegate_to: localhost
       tags:
         - create
