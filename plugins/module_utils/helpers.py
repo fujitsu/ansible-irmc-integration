@@ -6,7 +6,7 @@
 このモジュールは、JSON処理等の汎用的なユーティリティ関数を提供します。
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function, annotations
 
 __metaclass__ = type
 

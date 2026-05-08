@@ -6,7 +6,7 @@
 このモジュールは、iRMCのRedfish APIへのアクセスを提供するクライアントクラスを定義します。
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import, division, print_function, annotations
 
 __metaclass__ = type
 

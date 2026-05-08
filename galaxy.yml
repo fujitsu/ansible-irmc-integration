@@ -32,6 +32,6 @@ build_ignore:
   - inventory.ini
   - ansible.cfg
   - pyproject.toml
-  - requirements*
+  - requirements-dev.lock
   - uv.lock
   - .*
