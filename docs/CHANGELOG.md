@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Changed Ansible collection namespace from `fujitsu.primergy` to `fsas.primergy`
+  - Changed Ansible Galaxy collection page URL to `https://galaxy.ansible.com/fsas/primergy`
 - Changed GitHub repository URL from `github.com/fujitsu/fujitsu-ansible-irmc-integration` to `github.com/fujitsu/ansible-irmc-integration`
 - Update dependent Python packages
 - Updated the development workflow to recommend uv instead of rye
