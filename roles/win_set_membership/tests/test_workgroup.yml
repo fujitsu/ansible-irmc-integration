@@ -4,5 +4,5 @@
   roles:
     - role: fsas.primergy.win_set_membership
       vars:
-        state: "workgroup"
-        workgroup_name: "WORKGROUP"
+        state: workgroup
+        workgroup_name: WORKGROUP
