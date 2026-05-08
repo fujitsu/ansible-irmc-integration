@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Existing `rye sync` workflows remain available for backward compatibility
 - irmc_setvm module now allows to specify "HTTPS" for share_type
 
+### Fixed
+
+- Variable names for workgroup and domain configuration in win_set_membership role
+
 ## [3.0.0] - 2026-02-16
 
 ### Changed
