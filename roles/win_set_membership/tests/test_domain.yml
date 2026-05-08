@@ -5,6 +5,6 @@
     - role: fsas.primergy.win_set_membership
       vars:
         state: domain
-        domain: fti.test
+        domain_name: fti.test
         username: FTI\Administrator
         password: Admin000

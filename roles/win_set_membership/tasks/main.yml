@@ -4,7 +4,7 @@
   block:
     - name: Join host to workgroup with reboot automatically
       microsoft.ad.membership:
-        workgroup_name: "{{ workgroup }}"
+        workgroup_name: "{{ workgroup_name }}"
         domain_admin_user: "{{ username }}"
         domain_admin_password: "{{ password }}"
         state: "{{ state }}"
@@ -16,7 +16,7 @@
   block:
     - name: Join host to domain with reboot automatically
       microsoft.ad.membership:
-        dns_domain_name: "{{ domain }}"
+        dns_domain_name: "{{ domain_name }}"
         domain_admin_user: "{{ username }}"
         domain_admin_password: "{{ password }}"
         state: "{{ state }}"
