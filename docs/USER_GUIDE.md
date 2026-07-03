@@ -96,7 +96,7 @@ ansible_winrm_server_cert_validation=ignore
 Retrieve and display the configuration and settings of the specified iRMC device:
 
 ```shell
-$ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=P@ssw0rd! validate_certs=false"
+$ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=<password> validate_certs=false"
 localhost | SUCCESS => {
     "changed": false,
     "facts": {

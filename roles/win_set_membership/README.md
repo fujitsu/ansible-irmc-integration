@@ -53,7 +53,7 @@ playbook.yml(join a domain):
             state: domain
             domain_name: fti.test
             username: FTI\Administrator
-            password: Admin000
+            password: <password>
 
 License
 -------

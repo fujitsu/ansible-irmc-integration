@@ -1,5 +1,5 @@
 [windows]
-10.118.65.121 ansible_user=Administrator ansible_password=Admin000
+10.118.65.121 ansible_user=Administrator ansible_password=<password>
 
 [windows:vars]
 ansible_port=5985

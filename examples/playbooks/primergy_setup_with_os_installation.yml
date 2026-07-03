@@ -203,7 +203,7 @@
         state: domain
         domain: ansible.mycompany.local
         username: ANSIBLE\Administrator
-        password: P@ssw0rd
+        password: <password>
 
     # SNMP設定
     - name: Set SNMP
@@ -234,7 +234,7 @@
       ansible.builtin.include_role:
         name: fsas.primergy.win_serverview_agents
       vars:
-        password: User001
+        password: <password>
         installer: "/path/to/installer/ServerViewAgents_Win_x64.exe"
 
     # ServerView RAID Managerのセットアップ
@@ -242,7 +242,7 @@
       ansible.builtin.include_role:
         name: fsas.primergy.win_serverview_raidmanager
       vars:
-        password: User002
+        password: <password>
         installer: "/path/to/installer/ServerView_RAID_x64.exe"
         openjdk_installer: "/path/to/installer/OpenJDK8U-jre_x64_windows_hotspot.msi"
 

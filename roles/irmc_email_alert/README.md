@@ -115,7 +115,7 @@ playbook.yml:
 inventory.ini:
 
     [iRMC_group]
-    192.0.2.99 irmc_user=admin irmc_password=SECRET
+    192.0.2.99 irmc_user=admin irmc_password=<password>
 
     [iRMC_group:vars]
     validate_certificate=false  # When iRMC deivce is operated without a server certificate

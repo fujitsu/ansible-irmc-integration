@@ -63,7 +63,7 @@ playbook.yml:
       roles:
         - role: fsas.primergy.irmc_account_admin
           vars:
-            password: P@ssw0rd
+            password: <password>
             description: my description
             access:
               redfish:
@@ -84,7 +84,7 @@ playbook.yml:
                 enable: true
                 format: Standard
                 server: Automatic
-                address: User02@domain.com
+                address: User01@example.com
               alert:
                 fan: Warning
                 temperature: Warning
@@ -103,7 +103,7 @@ playbook.yml:
 inventory.ini:
 
     [iRMC_group]
-    192.0.2.99 irmc_user=admin irmc_password=SECRET
+    192.0.2.99 irmc_user=admin irmc_password=<password>
 
     [iRMC_group:vars]
     validate_certificate=false  # When iRMC deivce is operated without a server certificate
