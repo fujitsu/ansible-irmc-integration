@@ -261,7 +261,7 @@ in [Environment and setting sheet (PRIMERGY)](#environment-and-setting-sheet-har
     - role: fsas.primergy.irmc_account_admin
       vars:
         irmc_account_admin:
-          password: P@ssw0rd
+          password: <password>
           description: This is Administrator
 ```
 
@@ -581,7 +581,7 @@ in [Environment and setting sheet (Windows Server)](#environment-and-setting-she
         state: domain
         domain: fti.ansible.local
         username: FTI\Administrator
-        password: P@ssw0rd
+        password: <password>
 ```
 
 ### SNMP Configuration
@@ -664,7 +664,7 @@ Please download ServerView Agents in advance:
   roles:
     - role: fsas.primergy.win_serverview_agents
       vars:
-        password: P@ssw0rd!
+        password: <password>
         installer: /any/where/ServerView/Agents/ServerViewAgents_Win_x64.exe
 ```
 
@@ -699,7 +699,7 @@ Please download AdoptOpenJDK in advance:
   roles:
     - role: fsas.primergy.win_serverview_raidmanager
       vars:
-        password: P@ssw0rd!
+        password: <password>
         installer: /any/where/ServerViewRAIDManagerWindows64bit/Windows/x64/ServerView_RAID_7.17.5_x64.exe
         openjdk_installer: /any/where/OpenJDK8U-jre_x64_windows_hotspot_8u422b05.msi
 ```

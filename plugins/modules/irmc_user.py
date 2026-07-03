@@ -17,7 +17,7 @@ description:
 
 requirements:
     - The module needs to run locally.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3'
 
 version_added: "2.4"

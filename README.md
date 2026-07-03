@@ -33,8 +33,8 @@ See Contribution Guidelines for more details.
 
 ### Software
 
-- Python >= 3.10
-- Ansible >= 2.17
+- Python >= 3.14
+- Ansible Core >= 2.21.1
 - Python modules: 'requests', 'urllib3', 'requests', 'requests_toolbelt' and 'pywinrm'
 
 ## Roles

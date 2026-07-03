@@ -16,7 +16,7 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
 
 version_added: "2.4"
 
