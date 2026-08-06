@@ -172,7 +172,7 @@ def irmc_setvirtualmedia(module):
     max_dev_no = dig(vmdata, module.params['vm_type'], 'MaximumNumberOfDevices')
     if max_dev_no == 0:
         if not module.params['force_mediatype_active']:
-            result['warnings'] = "No Virtual Media of Type '" + module.params['vm_type'] + "' is configured!"
+            module.warn("No Virtual Media of Type '" + module.params['vm_type'] + "' is configured!")
             result['status'] = 20
             module.fail_json(**result)
         else:

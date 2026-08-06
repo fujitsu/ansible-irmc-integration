@@ -263,7 +263,7 @@ def preliminary_parameter_check(module):
 
         if get_irmc_json(sysdata.json(), 'PowerState') == 'On':
             result['skipped'] = True
-            result['warnings'] = 'Server is powered on. Cannot continue.'
+            module.warn('Server is powered on. Cannot continue.')
             module.exit_json(**result)
 
 

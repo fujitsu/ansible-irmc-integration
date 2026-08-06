@@ -21,18 +21,19 @@ bracex==3.0
     # via wcmatch
 certifi==2026.6.17
     # via requests
-cffi==2.0.0
+cffi==2.1.0
     # via
     #   ansible-lint
     #   cryptography
-charset-normalizer==3.4.7
+charset-normalizer==3.4.9
     # via requests
 click==8.4.2
     # via black
-colorama==0.4.6 ; sys_platform == 'win32'
+colorama==0.4.6
     # via
     #   click
     #   pytest
+    #   radon
 cryptography==49.0.0
     # via
     #   ansible-core
@@ -43,7 +44,7 @@ distro==1.9.0
     # via ansible-lint
 execnet==2.1.2
     # via pytest-xdist
-filelock==3.29.4
+filelock==3.29.7
     # via ansible-lint
 idna==3.18
     # via requests
@@ -58,6 +59,8 @@ jsonschema==4.26.0
 jsonschema-specifications==2025.9.1
     # via jsonschema
 lxml==6.1.1
+mando==0.7.1
+    # via radon
 markupsafe==3.0.3
     # via jinja2
 mypy-extensions==1.1.0
@@ -102,6 +105,7 @@ pyyaml==6.0.3
     #   ansible-core
     #   ansible-lint
     #   yamllint
+radon==6.0.1
 referencing==0.37.0
     # via
     #   ansible-lint
@@ -126,6 +130,8 @@ rpds-py==2026.6.3
 ruamel-yaml==0.19.1
     # via ansible-lint
 ruff==0.15.20
+six==1.17.0
+    # via mando
 sspilib==0.5.0 ; sys_platform == 'win32'
     # via pyspnego
 subprocess-tee==0.4.2
@@ -136,7 +142,7 @@ urllib3==2.7.0
     # via
     #   ansible-irmc-integration
     #   requests
-wcmatch==10.2
+wcmatch==10.2.1
     # via ansible-lint
 xmltodict==1.0.4
     # via pywinrm
