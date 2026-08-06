@@ -1,0 +1,112 @@
+---
+# irmc_fwbios_update の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: このケースは BIOS と iRMC のフラッシュに実際に書き込む。
+#       BIOS はダウングレードできない。host_vars の bios_filename が機体の現在の版より
+#       古いと status 21 で失敗する(実測)。iRMC 更新では iRMC 自身が再起動する。
+# ############################################################################
+#
+# ############################################################################
+# BIOS はダウングレードが拒否される(実測)。iRMC は下げる方向も通る。
+#
+#   対象   方向                          結果
+#   -----  ---------------------------   ------------------------------
+#   BIOS   R2.4.0 -> R2.6.0(上げる)      成功
+#   BIOS   R2.6.0 -> R2.6.0(同じ版)      成功
+#   BIOS   R2.6.0 -> R2.4.0(下げる)      失敗 status 21
+#   iRMC   2.71S -> 2.63S(下げる)        成功
+#   iRMC   2.63S -> 2.65S(上げる)        成功
+#   iRMC   2.63S -> 2.63S(同じ版)        成功
+#
+# BIOS は上げる方向も通るが、host_vars には現在と同じ版を置く。上げてしまうと
+# 下げられない以上そこから戻せず、テスト機の版が不可逆に変わるため。
+# 同版だと差分は出ないが、「更新手順が完走し、版数が壊れていない」ことのエビデンスになる。
+#
+# iRMC はどちらでも通る。before/after に差分が出るかが変わるだけ。
+#
+#   irmc_filename         差分   再現性
+#   -------------------   -----  ----------------------------------------
+#   書き込み先の面と同版   出ない  毎回同じ(手順の完走だけを確認)
+#   別の版                 出る    初回のみ。2回目以降は同版になるので出ない
+# ############################################################################
+#
+# changed は「更新手順が走った」ことしか示さない。同じ版を焼き直しても changed=1 を返す
+# (BIOS / iRMC とも実測)。wait_for_update_to_finish() が 503 -> 404 の遷移または
+# TaskState: Completed を見た時点で changed=True にするだけで、ファームが実際に
+# 変わったかは見ていないため。irmc_certificate の set と同じ性質。
+#
+# 電源オフが前提。オンだと preliminary_parameter_check() が skipped で抜けて何もしない。
+#
+# ############################################################################
+# iRMC 更新の安全条件: irmc_flash_selector と irmc_boot_selector が別の面を指していること。
+#
+# モジュールは file 経由でセレクタを送らない(known_bugs 2)が、iRMC 側に永続化された
+# irmc_flash_selector が効いてその面に書かれる。irmc_boot_selector が別の面なら
+# 動作中のファーム(FirmwareRunningState: Running)には一切触れない。
+# get ケースでこの前提を確認できる。
+# ############################################################################
+#
+# ファームウェアのパスは機体ごとに違うので host_vars/<host>.yml に置く
+# (irmc_license の license_key と同じ扱い)。ステップの vars に書くと --extra-vars として
+# 全ホストに適用されてしまう。パスの基準は playbook のある examples/modules/。
+#
+#   # host_vars/<host>.yml   ※ host_vars/ は gitignore 済み
+#   bios_filename: "../../tests/manual/assets/firmware/<機種>/BIOS/.../xxx.UPD"
+#   irmc_filename: "../../tests/manual/assets/firmware/<機種>/iRMC/xxx.BIN"
+#
+# 所要時間の実測(act ステップ単体): BIOS 約8分30秒、iRMC 約5分。
+# 失敗したダウングレードは3分40秒で終わったが、これは書き込みを完遂しなかったため。
+# known_bugs 1(再起動検出の失敗によるタイムアウト)は毎回起きるわけではない。
+# 実測では2回とも再起動中の接続断が WARNING として出たが、いずれも復帰を検出して完了した。
+#
+# 失敗経路は今回カバーしていない(必要なら expect_recap に failed: 1 を書けば検証できる)。
+#   update_source / update_type / file_name 未指定 : status 10
+#   ファイルが見つからない                        : [Errno 2] で failed
+#   ダウングレード                                : status 21
+
+- module: irmc_fwbios_update
+  name: get
+  playbook: irmc_fwbios_update_examples.yml
+  steps:
+    - name: act
+      description: 版数とセレクタを確認する。更新ケースの前提確認を兼ねる
+      tag: get_fw
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_fwbios_update
+  name: update_bios
+  playbook: irmc_fwbios_update_examples.yml
+  steps:
+    - name: arrange (power off)
+      description: 電源オンだと skipped になって更新されない
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off"}
+    - name: before
+      tag: get_fw
+    - name: act
+      description: host_vars の bios_filename(現在と同じ版)を適用する。約8分半かかる
+      tag: update_bios_file
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get_fw
+      expect_recap: {failed: 0}
+
+- module: irmc_fwbios_update
+  name: update_irmc
+  playbook: irmc_fwbios_update_examples.yml
+  steps:
+    - name: arrange (power off)
+      description: 電源オンだと skipped になって更新されない
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off"}
+    - name: before
+      tag: get_fw
+    - name: act
+      description: host_vars の irmc_filename を適用する。iRMC が再起動する。約5分かかる
+      tag: update_irmc_file
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get_fw
+      expect_recap: {failed: 0}

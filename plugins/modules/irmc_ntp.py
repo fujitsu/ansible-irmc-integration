@@ -63,21 +63,22 @@ options:
 
 EXAMPLES = '''
 # Get iRMC time settings
-- block:
-  - name: Get iRMC time settings
-    fsas.primergy.irmc_ntp:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-    register: time
-    delegate_to: localhost
-  - name: Show iRMC time settings
-    debug:
-      var: time.time_settings
+- name: Get and show iRMC time settings
   tags:
     - get
+  block:
+    - name: Get iRMC time settings
+      fsas.primergy.irmc_ntp:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: time
+      delegate_to: localhost
+    - name: Show iRMC time settings
+      ansible.builtin.debug:
+        var: time.time_settings
 
 # Set iRMC time option(s)
 - name: Set iRMC time option(s)

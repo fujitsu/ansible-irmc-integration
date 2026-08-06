@@ -7,16 +7,16 @@
 # variables not defined in this playbook are expexted to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: get server facts via iRMC
+- name: Get server facts via iRMC
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
@@ -32,7 +32,7 @@
       register: facts
       delegate_to: localhost
     - name: Show server and iRMC facts
-      debug:
+      ansible.builtin.debug:
         msg: "{{ facts.facts }}"
 
     # Get Virtual Media data
@@ -46,5 +46,5 @@
       register: vmdata
       delegate_to: localhost
     - name: Show Virtual Media data
-      debug:
+      ansible.builtin.debug:
         msg: "{{ vmdata.virtual_media_data }}"

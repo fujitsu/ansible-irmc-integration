@@ -1,0 +1,29 @@
+---
+# irmc_facts の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+
+- module: irmc_facts
+  name: get
+  playbook: irmc_facts_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_facts
+  name: set
+  playbook: irmc_facts_examples.yml
+  steps:
+    - name: arrange
+      description: act とは別の資産タグを設定し、before/after の差が見えるようにする
+      tag: set
+      vars: {asset_tag: "Ansible test server (arrange)"}
+    - name: before
+      tag: get
+    - name: act
+      tag: set
+      vars: {asset_tag: "Ansible test server"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

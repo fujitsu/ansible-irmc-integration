@@ -49,38 +49,40 @@ options:
 
 EXAMPLES = r'''
 # Get Virtual CD data
-- block:
-  - name: Get Virtual CD data
-    fsas.primergy.irmc_getvm:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      vm_type: CDImage
-    register: cddata
-    delegate_to: localhost
-  - name: Show Virtual CD data
-    debug:
-      var: cddata.virtual_media_data
+- name: Get and show Virtual CD data
   tags:
     - getcd
+  block:
+    - name: Get Virtual CD data
+      fsas.primergy.irmc_getvm:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        vm_type: CDImage
+      register: cddata
+      delegate_to: localhost
+    - name: Show Virtual CD data
+      ansible.builtin.debug:
+        var: cddata.virtual_media_data
 
 # Get Virtual HD data
-- block:
-  - name: Get Virtual HD data
-    fsas.primergy.irmc_getvm:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      vm_type: HDImage
-    register: hddata
-    delegate_to: localhost
-  - name: Show Virtual HD data
-    debug:
-      var: hddata.virtual_media_data
+- name: Get and show Virtual HD data
   tags:
     - gethd
+  block:
+    - name: Get Virtual HD data
+      fsas.primergy.irmc_getvm:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        vm_type: HDImage
+      register: hddata
+      delegate_to: localhost
+    - name: Show Virtual HD data
+      ansible.builtin.debug:
+        var: hddata.virtual_media_data
 '''
 
 RETURN = r'''

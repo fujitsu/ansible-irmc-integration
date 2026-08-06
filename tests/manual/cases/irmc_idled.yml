@@ -1,0 +1,29 @@
+---
+# irmc_idled の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+
+- module: irmc_idled
+  name: get
+  playbook: irmc_idled_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_idled
+  name: set
+  playbook: irmc_idled_examples.yml
+  steps:
+    - name: arrange
+      description: ID LEDを点滅にし、act が必ず変更を伴うようにする
+      tag: set
+      vars: {state: "Blinking"}
+    - name: before
+      tag: get
+    - name: act
+      tag: set
+      vars: {state: "Off"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

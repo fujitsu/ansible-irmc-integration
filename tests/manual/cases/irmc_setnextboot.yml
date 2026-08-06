@@ -1,0 +1,96 @@
+---
+# irmc_setnextboot の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# 電源操作もサーバ再起動も不要。/redfish/v1/Systems/0 への PATCH 1回だけで数秒で終わる。
+#
+# irmc_setnextboot には対になる get が無いので、before / after は irmc_getvm で観測する。
+# irmc_getvm の virtual_media_data が bootsource / bootoverride / bootmode を返すため
+# (どちらも /redfish/v1/Systems/0 の Boot オブジェクトを見ている)。
+# examples/modules/boot_to_virtual_cd.yml と roles/irmc_install_windows も
+# irmc_setnextboot の直後に irmc_getvm を置いており、これが正規の確認手段。
+#
+# irmc_setnextboot_examples.yml にはタグが無い(タスク1つ)ので、そのステップに tag を書かない。
+#
+# 冪等時は skipped ではなく changed=0 で返る(irmc_idled / irmc_powerstate とは違う)。
+#
+# next_boot は PATCH 後の再取得ではなく推定値(PATCH 前の値に送信ボディを update しただけ)
+# なので、最終確認は after の irmc_getvm で行う。
+#
+# AllowableValues は機種・世代で異なるため、どの世代にもある値だけを使う。
+# ここでは bootsource に BiosSetup / Cd / None、bootmode に UEFI のみ。
+#
+# ############################################################################
+# clear ケースは bootsource=None の経路に対する回帰テストを兼ねる。
+#
+# この経路は iRMC が受け付けるボディが機種によって排他的に異なる。
+# curl による実測(5機体。RedfishVersion と完全に相関した):
+#
+#   ボディ                                            1.15.0系(3台)  1.20.0系(2台)
+#   -----------------------------------------------  -------------  -------------
+#   {Target: None}                                         200            409
+#   {Target: None, Enabled: Once}                          500            409
+#   {Target: None, Enabled: Continuous}                    500            200
+#   {Target: None, Enabled: Continuous, Mode: UEFI}        500            200
+#   {Target: None, Mode: UEFI}                             500            409
+#
+#   解除後の Enabled / Mode                                null      Continuous / UEFI
+#
+# 共通して通るボディは無い。モジュールは2つを順に試して最初に 200 が返ったものを採用する
+# (plugins/modules/irmc_setnextboot.py の CLEAR_BODIES を参照)。
+#
+# したがって after の irmc_getvm が返す bootoverride / bootmode は機種で変わる。
+# 1.15.0系は null、1.20.0系は Continuous / UEFI。どちらも正常。
+# 判定に使えるのは bootsource が None になったことだけ。
+#
+# 厄介なのは、拒否されても変更自体は適用される点。ステータスだけを見ると
+# 「失敗したのに設定は変わっている」ことになり、再実行すると冪等判定で changed=0 に
+# なるため成功したように見えてしまう。切り分けるときは必ず arrange から流すこと。
+#
+# ############################################################################
+# 回帰を検出するには 1.15.0系と 1.20.0系の両方で流す必要がある。
+# 片方だけでは、以前この経路を片系だけ見て壊した事故を再発見できない。
+# ############################################################################
+#
+# 実際の起動は行わないので「仮想CDから本当に起動できるか」は検証範囲外。
+# 失敗経路(AllowableValues 外の値など)は今回カバーしていない
+# (必要なら expect_recap に failed: 1 を書けば検証できる)。
+#
+# ケースは set → clear の順。流し終わると上書き指定なしの状態で終わる。
+
+- module: irmc_setnextboot
+  name: set
+  playbook: irmc_setnextboot_examples.yml
+  steps:
+    - name: arrange
+      description: act とは別の値を設定し、before/after に差が出るようにする
+      vars: {bootsource: "BiosSetup"}
+    - name: before
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+    - name: act
+      vars: {bootsource: "Cd", bootoverride: "Once", bootmode: "UEFI"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+      expect_recap: {failed: 0}
+
+- module: irmc_setnextboot
+  name: clear
+  playbook: irmc_setnextboot_examples.yml
+  steps:
+    - name: arrange
+      description: 解除対象を作る。playbook 既定で bootoverride は Once になる
+      vars: {bootsource: "BiosSetup"}
+    - name: before
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+    - name: act
+      description: bootsource=None で上書き指定を解除する
+      vars: {bootsource: "None"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+      expect_recap: {failed: 0}

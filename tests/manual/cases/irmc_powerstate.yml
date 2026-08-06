@@ -1,0 +1,36 @@
+---
+# irmc_powerstate の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# act は PowerOn を使う。GracefulReset は ServerView Agents が必要で、かつ
+# 電源オンが前提となるため、arrange で確実に電源オフにしてから PowerOn を試す。
+
+- module: irmc_powerstate
+  name: get
+  playbook: irmc_powerstate_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_powerstate
+  name: set
+  playbook: irmc_powerstate_examples.yml
+  steps:
+    - name: arrange
+      description: 電源をオフにし、act の PowerOn が必ず変更を伴うようにする
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off"}
+    - name: before
+      tag: get
+    - name: act
+      tag: set
+      vars: {state: "PowerOn"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: settle
+      description: after の get が遷移中の値を拾わないよう On になるまで待つ
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "On"}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

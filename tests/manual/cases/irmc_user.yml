@@ -1,0 +1,131 @@
+---
+# irmc_user の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: このケースは iRMC のユーザーアカウントを作成・変更・削除する。
+#       対象は ansibleuser 固定。username を書き換えるときは、inventory の
+#       irmc_user(認証に使うアカウント)と違うことを必ず確認すること。
+#       認証アカウントを変更・削除するとロックアウトされ、Ansible からは復旧できない。
+# ############################################################################
+#
+# example playbook の delete タグだけは name: "{{ username }}" と default が無く、
+# 未定義なら未定義変数エラーで止まる。うっかり削除できない安全設計になっている。
+# 他のタグは username | default('ansibleuser') なので、既定でも認証アカウントには触れない。
+#
+# 電源操作もサーバ再起動も不要。SCCI 呼び出しのみで数秒。
+#
+# 対象ユーザーの存在有無による分岐(determine_userid)。
+#
+#   コマンド       いる                      いない
+#   ------------   -----------------------   ------------------------------
+#   create         skipped(already exists)   changed
+#   delete         changed                   skipped(does not exist)
+#   get / change   正常                      fail status 20(could not be found)
+#
+# arrange に expect_recap を付けていないのはこのため。存在有無に応じて changed にも
+# skipped にもなるのが正常。
+#
+# ############################################################################
+# create の before と delete の after に expect_recap: {failed: 1} を使っている。
+# get は対象がいないと status 20 で失敗するので、「ユーザーが存在しない」ことを
+# 積極的に示す手段が他に無いため。
+#   create の before -> 作成前は存在しなかったことの証明
+#   delete の after  -> 削除されて存在しないことの証明
+# 詳細は tests/manual/README_ja.md の「失敗することを検証する」を参照。
+# ############################################################################
+#
+# password はケースに書かず、playbook 側の password | default('StrongP@ssw0rd') に任せている。
+# ケースファイルに新たな認証情報を持ち込まないため。
+#
+# get 以外は無条件に changed=True を返す(冪等判定は無い)。
+#
+# change は変更対象のパラメータが1つ以上必要(setparam_count <= 1 で status 10)。
+# create は password 必須(status 11)。description は32文字まで(status 12)。
+#
+# iRMC のユーザースロットは15まで(determine_userid のループが usernumber >= 15 で抜ける)。
+# テスト用に1つ消費する。
+#
+# ケースは create -> get -> change -> delete の順。後続の arrange (create) は
+# 直前のケースが作ったユーザーを見つけて skip するので冪等で、
+# 最後の delete で消えるため流し終わりにユーザーが残らない。
+
+- module: irmc_user
+  name: create
+  playbook: irmc_user_examples.yml
+  steps:
+    - name: arrange
+      description: 既にいると create が skip されるため先に削除する(いなければ skip)
+      tag: delete
+      vars: {username: "ansibleuser"}
+    - name: before
+      description: 作成前は存在しないので get は失敗する(失敗を期待するステップ)
+      tag: get
+      vars: {username: "ansibleuser"}
+      expect_recap: {failed: 1}
+    - name: act
+      tag: create
+      vars: {username: "ansibleuser"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      vars: {username: "ansibleuser"}
+      expect_recap: {failed: 0}
+
+- module: irmc_user
+  name: get
+  playbook: irmc_user_examples.yml
+  steps:
+    - name: arrange
+      description: 取得対象を確実に存在させる(既にいれば skip)
+      tag: create
+      vars: {username: "ansibleuser"}
+    - name: act
+      tag: get
+      vars: {username: "ansibleuser"}
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_user
+  name: change
+  playbook: irmc_user_examples.yml
+  steps:
+    - name: arrange
+      description: 変更対象を確実に存在させる(既にいれば skip)
+      tag: create
+      vars: {username: "ansibleuser"}
+    - name: arrange (description)
+      description: act とは別の説明を設定し、before/after に差が出るようにする
+      tag: change
+      vars: {username: "ansibleuser", description: "manual test before"}
+    - name: before
+      tag: get
+      vars: {username: "ansibleuser"}
+    - name: act
+      tag: change
+      vars: {username: "ansibleuser", description: "manual test after"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      vars: {username: "ansibleuser"}
+      expect_recap: {failed: 0}
+
+- module: irmc_user
+  name: delete
+  playbook: irmc_user_examples.yml
+  steps:
+    - name: arrange
+      description: 削除対象を確実に存在させる(既にいれば skip)
+      tag: create
+      vars: {username: "ansibleuser"}
+    - name: before
+      tag: get
+      vars: {username: "ansibleuser"}
+    - name: act
+      tag: delete
+      vars: {username: "ansibleuser"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      description: 削除後は存在しないので get は失敗する(失敗を期待するステップ)
+      tag: get
+      vars: {username: "ansibleuser"}
+      expect_recap: {failed: 1}

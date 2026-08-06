@@ -8,16 +8,16 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_setvm - usage examples
+- name: Usage examples for irmc_setvm
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
@@ -29,12 +29,13 @@
         irmc_username: "{{ irmc_user }}"
         irmc_password: "{{ irmc_password }}"
         validate_certs: "{{ validate_certificate }}"
-        share_type: "{{ share_type }}"
+        share_type: "{{ share_type | default(omit) }}"
         server: "{{ server }}"
         share: "{{ share }}"
         image: "{{ image }}"
-        vm_user: "{{ vm_user }}"
-        vm_password: "{{ vm_password }}"
+        vm_domain: "{{ vm_domain | default(omit) }}"
+        vm_user: "{{ vm_user | default(omit) }}"
+        vm_password: "{{ vm_password | default(omit) }}"
         vm_type: "CDImage"
       delegate_to: localhost
       tags:
@@ -47,12 +48,13 @@
         irmc_username: "{{ irmc_user }}"
         irmc_password: "{{ irmc_password }}"
         validate_certs: "{{ validate_certificate }}"
-        share_type: "{{ share_type }}"
+        share_type: "{{ share_type | default(omit) }}"
         server: "{{ server }}"
         share: "{{ share }}"
         image: "{{ image }}"
-        vm_user: "{{ vm_user }}"
-        vm_password: "{{ vm_password }}"
+        vm_domain: "{{ vm_domain | default(omit) }}"
+        vm_user: "{{ vm_user | default(omit) }}"
+        vm_password: "{{ vm_password | default(omit) }}"
         vm_type: "HDImage"
       delegate_to: localhost
       tags:

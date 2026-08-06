@@ -14,14 +14,14 @@
 
   vars:
     # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
+    # irmc_user: "<username>"
+    # irmc_password: "<password>"
     # Note: set validate_certificate to false for self-signed certificate
     # validate_certificate: false
     # path to file to read LDAP settings from
     # ldap_settings_file: "UserData.json"
-    # ldap_user: "ldap_user"
-    # ldap_password: "ldap_password"
+    # ldap_user: "<ldap_username>"
+    # ldap_password: "<ldap_password>"
     ldap_settings: "{{ lookup('file','{{ ldap_settings_file }}') | from_json }}"
 
   gather_facts: false

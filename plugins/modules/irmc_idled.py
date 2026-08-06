@@ -52,21 +52,22 @@ options:
 
 EXAMPLES = r'''
 # Get server ID LED state
-- block:
-  - name: Get ID LED state
-    fsas.primergy.irmc_idled:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-    register: idled
-    delegate_to: localhost
-  - name: Show iRMC ID LED state
-    debug:
-      var: idled.idled_state
+- name: Get and show server ID LED state
   tags:
     - get
+  block:
+    - name: Get ID LED state
+      fsas.primergy.irmc_idled:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: idled
+      delegate_to: localhost
+    - name: Show iRMC ID LED state
+      ansible.builtin.debug:
+        var: idled.idled_state
 
 # Set server ID LED state
 - name: Set server ID LED state

@@ -56,80 +56,84 @@ options:
 '''
 
 EXAMPLES = r'''
-- block:
-  - name: List iRMC InternalEventLog
-    fsas.primergy.irmc_eventlog:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "list"
-      eventlog_type: "InternalEventLog"
-    delegate_to: localhost
-    register: list_internaleventlog
-  - name: Show list InternalEventLog
-    debug:
-      var: list_internaleventlog
+- name: List and show iRMC InternalEventLog
   tags:
     - list_internaleventlog
+  block:
+    - name: List iRMC InternalEventLog
+      fsas.primergy.irmc_eventlog:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "list"
+        eventlog_type: "InternalEventLog"
+      delegate_to: localhost
+      register: list_internaleventlog
+    - name: Show list InternalEventLog
+      ansible.builtin.debug:
+        var: list_internaleventlog
 
 # List iRMC SystemEventLog
-- block:
-  - name: List iRMC SystemEventLog
-    fsas.primergy.irmc_eventlog:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "list"
-      eventlog_type: "SystemEventLog"
-    delegate_to: localhost
-    register: list_systemeventlog
-  - name: Show list SystemEventLog
-    debug:
-      var: list_systemeventlog
+- name: List and show iRMC SystemEventLog
   tags:
     - list_systemeventlog
+  block:
+    - name: List iRMC SystemEventLog
+      fsas.primergy.irmc_eventlog:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "list"
+        eventlog_type: "SystemEventLog"
+      delegate_to: localhost
+      register: list_systemeventlog
+    - name: Show list SystemEventLog
+      ansible.builtin.debug:
+        var: list_systemeventlog
 
 # Get specific InternalEventLog entry information
 # Add '-e "id=xx"' to the command line argument of Playbook.
-- block:
-  - name: Get specific InternalEventLog entry information
-    fsas.primergy.irmc_eventlog:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-      eventlog_type: "InternalEventLog"
-      id: "{{ id | int }}"
-    delegate_to: localhost
-    register: get_internaleventlog
-  - name: Show specific InternalEventLog
-    debug:
-      var: get_internaleventlog.eventlog_entry
+- name: Get and show a specific InternalEventLog entry
   tags:
     - get_internaleventlog
+  block:
+    - name: Get specific InternalEventLog entry information
+      fsas.primergy.irmc_eventlog:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+        eventlog_type: "InternalEventLog"
+        id: "{{ id | int }}"
+      delegate_to: localhost
+      register: get_internaleventlog
+    - name: Show specific InternalEventLog
+      ansible.builtin.debug:
+        var: get_internaleventlog.eventlog_entry
 
 # Get specific SystemEventLog entry information
 # Add '-e "id=xx"' to the command line argument of Playbook.
-- block:
-  - name: Get specific SystemEventLog entry information
-    fsas.primergy.irmc_eventlog:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-      eventlog_type: "SystemEventLog"
-      id: "{{ id | int }}"
-    delegate_to: localhost
-    register: get_systemeventlog
-  - name: Show get specific SystemEventLog
-    debug:
-      var: get_systemeventlog.eventlog_entry
+- name: Get and show a specific SystemEventLog entry
   tags:
     - get_systemeventlog
+  block:
+    - name: Get specific SystemEventLog entry information
+      fsas.primergy.irmc_eventlog:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+        eventlog_type: "SystemEventLog"
+        id: "{{ id | int }}"
+      delegate_to: localhost
+      register: get_systemeventlog
+    - name: Show get specific SystemEventLog
+      ansible.builtin.debug:
+        var: get_systemeventlog.eventlog_entry
 
 # Clear iRMC InternalEventLog
 - name: Clear iRMC InternalEventLog

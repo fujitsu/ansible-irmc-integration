@@ -8,37 +8,38 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_license - usage examples
+- name: Usage examples for irmc_license
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
   tasks:
     # Get iRMC license key
-    - block:
-      - name: Get iRMC license key
-        fsas.primergy.irmc_license:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "get"
-        register: license
-        delegate_to: localhost
-
-      - name: show certificates
-        debug:
-          var: license.license_key
+    - name: Get and show iRMC license key
       tags:
         - get
+      block:
+        - name: Get iRMC license key
+          fsas.primergy.irmc_license:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "get"
+          register: license
+          delegate_to: localhost
+
+        - name: Show certificates
+          ansible.builtin.debug:
+            var: license.license_key
 
 
     # Set iRMC license key
