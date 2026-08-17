@@ -18,7 +18,7 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3', 'requests_toolbelt'
 
 version_added: "2.4"
@@ -399,7 +399,7 @@ def preliminary_parameter_check(module, irmc, result):
 
             if dig(sysdata, 'PowerState') == 'On':
                 result['skipped'] = True
-                result['warnings'] = 'Server is powered on. Cannot continue.'
+                module.warn('Server is powered on. Cannot continue.')
                 module.exit_json(**result)
 
 
@@ -442,16 +442,13 @@ def wait_for_update_to_finish(module, irmc, location, power_state, result):
             state = dig(sdata, 'TaskState')
             # make sure the process ran through
             if power_state == 'On' and oemstate == 'Pending':
-                msg = 'A BIOS firmware update has been started and a system reboot is required to continue the update.'
-                result['warnings'] = msg
+                module.warn('A BIOS firmware update has been started and a system reboot is required to continue the update.')
                 break
             if power_state == 'On' and oemstate == 'FlashImageDownloadedSuccessfully':
-                msg = 'A BIOS firmware update has been started. A system reboot is required to continue the update.'
-                result['warnings'] = msg
+                module.warn('A BIOS firmware update has been started. A system reboot is required to continue the update.')
                 break
             if power_state == 'On' and oemstate == 'FlashingFinishedSuccessfullyRebootRequired':
-                msg = 'A iRMC firmware update has finished. A system reboot is required to activate the update.'
-                result['warnings'] = msg
+                module.warn('A iRMC firmware update has finished. A system reboot is required to activate the update.')
                 break
             if state == 'Exception':
                 msg = f'{now}: Update failed.'

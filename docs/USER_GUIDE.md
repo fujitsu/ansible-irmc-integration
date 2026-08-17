@@ -27,15 +27,15 @@ This document is intended for users with basic knowledge of Ansible.
 - Linux
   (For Windows, refer to "5. Frequently Asked Questions (FAQ)" under
   "[Can I run Ansible on Windows?](#can-i-run-ansible-on-windows))"
-- Python 3.10
+- Python 3.14
 
 #### Python Modules
 
-- `ansible` >= 10.7.0
+- `ansible` >= 14.1.0
 - `pywinrm` >= 0.5.0
-- `requests` >= 2.33.1
+- `requests` >= 2.34.2
 - `requests_toolbelt` >= 1.0.0
-- `urllib3` >= 2.6.3
+- `urllib3` >= 2.7.0
 
 ### Setting Up Ansible Execution Environment
 

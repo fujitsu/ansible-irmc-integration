@@ -214,7 +214,7 @@ class TestGetAdapter:
         - StorageControllers[*].MemberIdと照合
         - 複数マッチした場合、最後のマッチが使われる（breakが内側ループのみ）
 
-        実機データ（10.118.65.66）では:
+        実機データ（*.*.*.66）では:
         - Storage[0]: PRAID EP640i, StorageControllers[0].MemberId='0'
         - Storage[1]: Windows AHCI, StorageControllers[0].MemberId='0'
 
@@ -290,9 +290,7 @@ class TestGetRaidConfiguration:
 
     データソース:
     - RAIDAdapterProfile API: GET /rest/v1/Oem/eLCM/ProfileManagement/RAIDAdapter
-      実機データ: raidadapter_profile_10.118.65.66.txt L98-201
     - Storage API: GET /redfish/v1/Systems/0/Storage?$expand=Members
-      実機データ: raidadapter_profile_10.118.65.66.txt L203-738
 
     データフロー:
     1. RAIDAdapterProfile APIレスポンス全体を受け取る
