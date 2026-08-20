@@ -65,21 +65,22 @@ options:
 
 EXAMPLES = r'''
 # Get basic server and iRMC facts
-- block:
-  - name: Get basic server and iRMC facts
-    fsas.primergy.irmc_facts:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-    register: result
-    delegate_to: localhost
-  - name: Show server and iRMC facts
-    debug:
-      var: result.facts
+- name: Get and show basic server and iRMC facts
   tags:
     - get
+  block:
+    - name: Get basic server and iRMC facts
+      fsas.primergy.irmc_facts:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: result
+      delegate_to: localhost
+    - name: Show server and iRMC facts
+      ansible.builtin.debug:
+        var: result.facts
 
 # Set server asset tag
 - name: Set server asset tag

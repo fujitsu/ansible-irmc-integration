@@ -1,0 +1,63 @@
+---
+# irmc_certificate の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: このケースは iRMC の SSL 証明書を実際に置き換える。
+#       Ansible にはデフォルトの証明書に戻す手段が無い(command は get / set のみ)。
+#       システム既定へ戻すには iRMC の Web UI を使う必要がある。
+# ############################################################################
+#
+# 登録する証明書は git 管理下に無い。実行前に "tests/manual/assets/certs/" で make すること
+# (秘密鍵を含むので gitignore 済み)。未生成だと [Errno 2] で failed になる。
+# 生成方法と Subject の意味はそのディレクトリの README.md を参照。
+#
+# ファイルパスが "../../tests/manual/assets/certs/..." になっているのは、モジュールが
+# read_keyfile() で素の open() を使っており、カレントディレクトリが playbook のある
+# examples/modules/ になるため。リポジトリルートからの相対ではない。
+#
+# arrange で server1、act で server2 を登録して before/after に差を出している。
+# irmc_certificate の set は現在値を見ずに常に changed を返すため、同じ証明書を
+# 登録し続けると before と after が同一になりエビデンスにならない。
+# 同じ理由で expect_recap の changed: 1 は「タスクが走った」ことしか示さない。
+# 実質的なエビデンスは before/after の ssl_certificate の差で、確認方法は
+# tests/manual/README_ja.md に記載してある。
+#
+# 証明書を実際に反映するには iRMC の再起動が必要(モジュールの DOCUMENTATION の注記)。
+# ただし get は SCCI で設定値を読むため再起動前でも新しい証明書を返し、
+# テストは validate_certs: false なので再起動しなくても通る。
+#
+# 電源操作は不要。
+
+- module: irmc_certificate
+  name: get
+  playbook: irmc_certificate_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_certificate
+  name: set
+  playbook: irmc_certificate_examples.yml
+  steps:
+    - name: arrange
+      description: act とは別のサーバ証明書(server1)を登録し、before/after に差が出るようにする
+      tag: set
+      vars:
+        private_key_path: "../../tests/manual/assets/certs/server1.key"
+        ssl_cert_path: "../../tests/manual/assets/certs/server1.crt"
+        ssl_ca_cert_path: "../../tests/manual/assets/certs/ca.crt"
+    - name: before
+      tag: get
+    - name: act
+      description: server2 の証明書を登録する
+      tag: set
+      vars:
+        private_key_path: "../../tests/manual/assets/certs/server2.key"
+        ssl_cert_path: "../../tests/manual/assets/certs/server2.crt"
+        ssl_ca_cert_path: "../../tests/manual/assets/certs/ca.crt"
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

@@ -8,20 +8,20 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: get iRMC user data and store in file
+- name: Get iRMC user data and store in file
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # path to file to save user data to
-    #   make sure to not overwrite this file if you do not intend to
-    # user_data_file: "UserData.json"
-    # export_user: "admin"
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   # path to file to save user data to
+  #   #   make sure to not overwrite this file if you do not intend to
+  #   user_data_file: "UserData.json"
+  #   export_user: "<export_username>"
 
   gather_facts: false
 
@@ -38,11 +38,11 @@
       register: user
       delegate_to: localhost
     - name: Show iRMC user details
-      debug:
+      ansible.builtin.debug:
         msg: "{{ user.user }}"
 
     # Write User Data to file
     - name: Write user Data to file
-      copy:
+      ansible.builtin.copy:
         content: "{{ user.user }}"
         dest: "{{ user_data_file }}"

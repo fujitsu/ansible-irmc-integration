@@ -8,16 +8,16 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_cas - usage examples
+- name: Usage examples for irmc_cas
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
@@ -33,7 +33,7 @@
       register: cas
       delegate_to: localhost
     - name: Show iRMC CAS data
-      debug:
+      ansible.builtin.debug:
         msg: "{{ cas.cas }}"
 
     # Set CAS data

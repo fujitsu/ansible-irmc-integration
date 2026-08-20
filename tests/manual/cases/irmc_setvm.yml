@@ -1,0 +1,53 @@
+---
+# irmc_setvm の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# 仮想メディア系の3モジュール(getvm / setvm / connectvm)は密接に関連するが、
+# エビデンスは独立して必要なのでケース定義もモジュールごとに分けてある。
+#
+# HDImage は現行機器の iRMC では対応していないためテスト対象外(sethd タグは使わない)。
+#
+# メディアの所在(share_type / server / share / image)は inventory.ini の
+# [iRMC_group:vars] から供給される。ステップの vars に書くと --extra-vars として
+# 全ホストを上書きしてしまうため、arrange の image 以外はここに書かない。
+#
+# setvm には対になる get が無いので、before / after は irmc_getvm_examples.yml で観測する
+# (ステップごとの playbook 上書き。'/' を含まない値は --playbook-dir からの相対)。
+#
+# 状態依存の挙動:
+#   setvm       : 接続中(Connected)だと failed。未接続なら同じメディアでも changed
+#   connectCD   : 接続中だと skipped
+#   disconnectCD: 未接続だと skipped
+# 接続中の setvm のような失敗経路は今回カバーせず、arrange で前提を整えて回避する
+# (必要なら expect_recap に failed: 1 を書けば検証できる)。
+#
+# arrange の image は実在しないプレースホルダ名。setvm はメディアの実在を検証しないので
+# 設定自体は成功する。ただしこの状態で connectCD すると失敗するため、
+# このケースが arrange の直後で中断した場合は connectvm 側の arrange (media) が後始末する。
+#
+# 電源操作は不要。
+
+- module: irmc_setvm
+  name: set
+  playbook: irmc_setvm_examples.yml
+  steps:
+    - name: arrange (disconnect)
+      description: setvm は接続中だと失敗するため切断しておく(既に未接続なら skipped で正常)
+      playbook: irmc_connectvm_examples.yml
+      tag: disconnectCD
+    - name: arrange
+      description: act とは別のイメージを設定し、before/after に差が出るようにする
+      tag: setcd
+      vars:
+        image: "arrange-placeholder.iso"
+    - name: before
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+    - name: act
+      description: inventory の image を設定する
+      tag: setcd
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+      expect_recap: {failed: 0}

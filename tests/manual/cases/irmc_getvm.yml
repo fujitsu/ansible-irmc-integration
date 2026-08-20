@@ -1,0 +1,21 @@
+---
+# irmc_getvm の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# 仮想メディア系の3モジュール(getvm / setvm / connectvm)は密接に関連するが、
+# エビデンスは独立して必要なのでケース定義もモジュールごとに分けてある。
+# getvm は setvm / connectvm のケースで before / after の観測手段としても使われる。
+#
+# HDImage は対応する iRMC が減っているためテスト対象外(gethd タグは使わない)。
+#
+# getvm は接続状態を問わず実行できるので arrange は不要。
+#
+# 電源操作は不要。
+
+- module: irmc_getvm
+  name: get
+  playbook: irmc_getvm_examples.yml
+  steps:
+    - name: act
+      tag: getcd
+      expect_recap: {failed: 0}

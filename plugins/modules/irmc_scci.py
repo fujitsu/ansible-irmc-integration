@@ -85,22 +85,23 @@ EXAMPLES = r'''
     - write
 
 # Read server location
-- block:
-  - name: "Read server location"
-    fsas.primergy.irmc_scci:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get_cs"
-      opcodeext: 0x200
-    register: read_result
-    delegate_to: localhost
-  - name: Show server location
-    debug:
-      var: read_result.data
+- name: Read and show server location
   tags:
     - read
+  block:
+    - name: "Read server location"
+      fsas.primergy.irmc_scci:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get_cs"
+        opcodeext: 0x200
+      register: read_result
+      delegate_to: localhost
+    - name: Show server location
+      ansible.builtin.debug:
+        var: read_result.data
 
 # Power on the server
 - name: "Power on the server"

@@ -125,18 +125,22 @@ options:
 
 EXAMPLES = r'''
 # Get LDAP data
-- name: Get LDAP data
-  fsas.primergy.irmc_ldap:
-    irmc_url: "{{ inventory_hostname }}"
-    irmc_username: "{{ irmc_user }}"
-    irmc_password: "{{ irmc_password }}"
-    validate_certs: "{{ validate_certificate }}"
-    command: "get"
-  register: ldap
-  delegate_to: localhost
-- name: Show iRMC LDAP data
-  debug:
-    msg: "{{ ldap.ldap }}"
+- name: Get and show LDAP data
+  tags:
+    - get
+  block:
+    - name: Get LDAP data
+      fsas.primergy.irmc_ldap:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: ldap
+      delegate_to: localhost
+    - name: Show iRMC LDAP data
+      ansible.builtin.debug:
+        msg: "{{ ldap.ldap }}"
 
 # Set LDAP data
 - name: Set LDAP data
@@ -146,9 +150,11 @@ EXAMPLES = r'''
     irmc_password: "{{ irmc_password }}"
     validate_certs: "{{ validate_certificate }}"
     command: "set"
-    ldap_user: "username"
-    ldap_password: "password"
+    ldap_user: "{{ ldap_user }}"
+    ldap_password: "{{ ldap_password }}"
   delegate_to: localhost
+  tags:
+    - set
 '''
 
 RETURN = r'''

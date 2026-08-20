@@ -17,9 +17,20 @@
     fail_msg: "Invalid value for SMTP authentication types. Allowed values are: 'None', 'Smtp'."
   tags: json
 
+# The filter used to receive the internal `vars` dictionary, which is deprecated and
+# will be removed in ansible-core 2.24. Pass only the keys the filter actually reads.
+# Note: the `vars:` keyword below is a task keyword, not that magic variable.
 - name: Generate E-mail Alert settings as IRMC profile
   ansible.builtin.set_fact:
-    email_alert_profile: "{{ vars | fsas.primergy.email_alert_profile_filter }}"
+    email_alert_profile: "{{ profile_params | fsas.primergy.email_alert_profile_filter }}"
+  vars:
+    profile_params:
+      ansible_verbosity: "{{ ansible_verbosity }}"
+      email_alert: "{{ email_alert | default(None) }}"
+      smtp: "{{ smtp | default(None) }}"
+      email_format: "{{ email_format | default(None) }}"
+      irmc_email_alert_profile_server_version: "{{ irmc_email_alert_profile_server_version }}"
+      irmc_email_alert_profile_irmcconfig_version: "{{ irmc_email_alert_profile_irmcconfig_version }}"
   tags: json
 
 - name: Apply E-mail Alert settings as IRMC profile

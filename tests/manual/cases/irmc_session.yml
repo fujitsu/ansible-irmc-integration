@@ -1,0 +1,99 @@
+---
+# irmc_session の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# clearall は全消しではない。#text に "Profile" を含むセッションだけを remove し、
+# 他は素通りする。そのため arrange も Profile 系セッションを作るモジュールでなければ
+# before/after に差が出ない。セッションを作るモジュールを全数調査した結果、
+# 軽くて副作用が小さいのは irmc_profiles の create_profile だけだった。
+#
+#   モジュール / タグ                        セッション名                     コスト
+#   --------------------------------------   ------------------------------   ----------------
+#   irmc_profiles / create_profile           ProfileParametersObtain          軽い(採用)
+#   irmc_biosbootorder / get (force_new)     ProfileParametersObtain          3〜7分＋再起動
+#   irmc_elcm_repository / set               TestUpdateRepositoryConnection   0秒だが Profile 名でない
+#   irmc_elcm_online_update / check          OnlineUpdateCheck                約3分・電源ON必須
+#   irmc_elcm_offline_update                 -                                ファームウェア更新
+#
+# ############################################################################
+# 副作用: clearall ケースの arrange が iRMC の HWConfigurationIrmc プロファイルを
+#         削除して作り直す。再生成可能なので実害は無いが、eLCM の
+#         ProfileManagement 配下が書き換わることは認識しておくこと。
+# ############################################################################
+#
+# create_profile はプロファイルが既存だと 409 で skipped になりセッションを作らない。
+# そのため arrange は delete_profile → create_profile の順にしてある。delete_profile は
+# セッションを作らず、404 なら skipped なので繰り返し実行できる。
+# この「削除してから取り直す」手順は irmc_biosbootorder の force_new_boot_profile() と同じ。
+#
+# ケースは list → get → clearall の順。clearall が Profile セッションを消すため、
+# get を先に流して静的 session_id が生き残っている可能性を上げている。
+#
+# ############################################################################
+# session_id: 1 は存在の保証ではない。status 12 ("Session with ID '1' does not exist.")
+# で落ちたら、ケースの不備ではなく機体の状態なので results/irmc_session/list.txt の Id から
+# 選び直すこと。clearall で消えない iRMC 所有セッション(Text に "Profile" を含まない
+# OnlineUpdateCheck など)を選ぶと、繰り返し実行しても安定する。
+# ############################################################################
+#
+# remove / terminate はケース化していない。
+#   remove   : 対象は Profile / Update / Configuration 系に限られ(それ以外は status 11)、
+#              Profile セッションは実行のたびに新しい id が採番されるので静的に書けない。
+#              ただし DELETE 経路自体は clearall が内部で remove を呼ぶためカバーされる。
+#   terminate: 同じく id が必要。かつ完了済みセッション相手だと必ず skipped になり、
+#              本来の終了処理は通らない。
+# 手で確認する場合は list で id と Text を見てから直接叩く。
+#
+#   uv run ansible-playbook examples/modules/irmc_session_examples.yml -i inventory.ini \
+#     --tags remove -e session_id=<N> --limit <host>
+#
+# 失敗経路は今回カバーしていない(必要なら expect_recap に failed: 1 を書けば検証できる)。
+#   id 未指定                          : status 10
+#   存在しない id で get               : status 12
+#   iRMC 所有セッションへの remove 等  : status 11
+#
+# 電源操作は不要。
+
+- module: irmc_session
+  name: list
+  playbook: irmc_session_examples.yml
+  steps:
+    - name: act
+      tag: list
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_session
+  name: get
+  playbook: irmc_session_examples.yml
+  steps:
+    - name: act
+      description: status 12 で落ちる場合は list のエビデンスから id を選び直す
+      tag: get
+      vars: {session_id: 1}
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_session
+  name: clearall
+  playbook: irmc_session_examples.yml
+  steps:
+    - name: arrange (clear)
+      description: 既存の Profile セッションを一掃し、after が空になることを保証する
+      tag: clearall
+    - name: arrange (profile)
+      description: プロファイルが残っていると次の create が 409 で skip されセッションが作られない
+      playbook: irmc_profiles_examples.yml
+      tag: delete_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+    - name: arrange (session)
+      description: ProfileParametersObtain セッションを生成する。clearall の削除対象になる
+      playbook: irmc_profiles_examples.yml
+      tag: create_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+    - name: before
+      tag: list
+    - name: act
+      tag: clearall
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: list
+      expect_recap: {failed: 0}

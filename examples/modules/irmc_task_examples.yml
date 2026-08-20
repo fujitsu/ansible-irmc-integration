@@ -8,51 +8,53 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_task - usage examples
+- name: Usage examples for irmc_task
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
   tasks:
     # List iRMC tasks
-    - block:
-      - name: List iRMC tasks
-        fsas.primergy.irmc_task:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "list"
-        register: list
-        delegate_to: localhost
-      - name: Show list of tasks
-        debug:
-          var: list.tasks
+    - name: List and show iRMC tasks
       tags:
         - list
+      block:
+        - name: List iRMC tasks
+          fsas.primergy.irmc_task:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "list"
+          register: list
+          delegate_to: localhost
+        - name: Show list of tasks
+          ansible.builtin.debug:
+            var: list.tasks
 
     # Get specific task information
-    - block:
-      - name: Get specific task information
-        fsas.primergy.irmc_task:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "get"
-          id: "{{ id | int }}"
-        register: get
-        delegate_to: localhost
-      - name: Show specific task
-        debug:
-          var: get.task
+    - name: Get and show a specific task
       tags:
         - get
+      block:
+        - name: Get specific task information
+          fsas.primergy.irmc_task:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "get"
+            id: "{{ id | int }}"
+          register: get
+          delegate_to: localhost
+        - name: Show specific task
+          ansible.builtin.debug:
+            var: get.task

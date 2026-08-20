@@ -254,6 +254,13 @@ The following coding standards are adopted to improve efficiency and code qualit
   uv run ansible-test units --python 3.14
   ```
 
+### 6.3 Testing Against Real Hardware
+
+- `./tests/manual` holds a runner that executes every module against a physical PRIMERGY server.
+  It is a maintainer tool for recording evidence before a release;
+  you do not need to run it in order to contribute.
+- See [`README.md`](/tests/manual/README.md) for usage and caveats.
+
 ---
 
 ## 7. Documentation
