@@ -181,20 +181,20 @@ in [Environment and setting sheet (PRIMERGY)](#environment-and-setting-sheet-har
   roles:
     - role: fsas.primergy.irmc_snmp
       vars:
-        irmc_snmp:
+        snmp:
           enabled: true
           protocol: "All"
           community_name: "test-public"
 
-          trap_destination:
-            community_name: "test-trap-public"
-            servers:
-              - index: 0
-                name: 192.0.2.1
-                protocol: "SnmpV2c"
-              - index: 1
-                name: 192.0.2.2
-                protocol: "SnmpV1"
+        snmp_trap_destination:
+          community_name: "test-trap-public"
+          servers:
+            - index: 0
+              name: 192.0.2.1
+              protocol: "SnmpV2c"
+            - index: 1
+              name: 192.0.2.2
+              protocol: "SnmpV1"
 ```
 
 ### Email Alerting
@@ -220,19 +220,21 @@ in [Environment and setting sheet (PRIMERGY)](#environment-and-setting-sheet-har
   roles:
     - role: fsas.primergy.irmc_email_alert
       vars:
-        irmc_email_alert:
+        email_alert:
           enabled: true
-          smtp:
-            primary_server:
-              address: 192.0.2.1
-              authentication:
-                type: "Smtp"
-                username: "AuthUserName"
-                password: "AuthPassword"
-          email_format:
-            from: "MailFrom@domain.example.com"
-            subject: "FixedMailSubject"
-            message: "FixedMailMessage"
+
+        smtp:
+          primary_server:
+            address: 192.0.2.1
+            authentication:
+              type: "Smtp"
+              username: "AuthUserName"
+              password: "AuthPassword"
+
+        email_format:
+          from: "MailFrom@domain.example.com"
+          subject: "FixedMailSubject"
+          message: "FixedMailMessage"
 ```
 
 ### Local User Accounts
@@ -260,9 +262,8 @@ in [Environment and setting sheet (PRIMERGY)](#environment-and-setting-sheet-har
   roles:
     - role: fsas.primergy.irmc_account_admin
       vars:
-        irmc_account_admin:
-          password: <password>
-          description: This is Administrator
+        password: <password>
+        description: This is Administrator
 ```
 
 #### Configuration of Users 2 to 15
@@ -558,7 +559,7 @@ in [Environment and setting sheet (Windows Server)](#environment-and-setting-she
     - role: fsas.primergy.win_set_membership
       vars:
         state: workgroup
-        workgroup: WORKGROUP
+        workgroup_name: WORKGROUP
 ```
 
 ### Joining a Domain
@@ -579,8 +580,8 @@ in [Environment and setting sheet (Windows Server)](#environment-and-setting-she
     - role: fsas.primergy.win_set_membership
       vars:
         state: domain
-        domain: fti.ansible.local
-        username: FTI\Administrator
+        domain_name: example.test
+        username: EXAMPLE\Administrator
         password: <password>
 ```
 

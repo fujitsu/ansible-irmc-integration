@@ -51,8 +51,8 @@ playbook.yml(join a domain):
         - role: fsas.primergy.win_set_membership
           vars:
             state: domain
-            domain_name: fti.test
-            username: FTI\Administrator
+            domain_name: example.test
+            username: EXAMPLE\Administrator
             password: <password>
 
 License

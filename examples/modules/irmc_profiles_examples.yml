@@ -62,6 +62,7 @@
           ansible.builtin.copy:
             content: "{{ get_profile.profile | to_nice_json }}"
             dest: "/tmp/{{ profile_name }}.json"
+            mode: "0600"
           delegate_to: localhost
 
     # Create profile

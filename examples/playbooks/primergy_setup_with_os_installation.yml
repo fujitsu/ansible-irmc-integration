@@ -201,8 +201,8 @@
         name: fsas.primergy.win_set_membership
       vars:
         state: domain
-        domain: ansible.mycompany.local
-        username: ANSIBLE\Administrator
+        domain_name: example.test
+        username: EXAMPLE\Administrator
         password: <password>
 
     # SNMP設定
