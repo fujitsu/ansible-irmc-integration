@@ -93,8 +93,8 @@ When updating with firmware for each model name via a TFTP server:
 inventory.ini:
 
     [iRMC_group]
-    192.0.2.101 irmc_user=admin irmc_password=SECRET
-    192.0.2.102 irmc_user=admin irmc_password=SECRET
+    192.0.2.101 irmc_user=admin irmc_password=<password>
+    192.0.2.102 irmc_user=admin irmc_password=<password>
 
     [iRMC_group:vars]
     validate_certificate=false  # When iRMC device is operated without a server certificate

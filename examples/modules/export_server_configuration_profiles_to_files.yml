@@ -8,20 +8,20 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: get iRMC system and hardware configuration and store in file
+- name: Get iRMC system and hardware configuration and store in file
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # path to files to save iRMC profiles to
-    #   make sure to not overwrite these files if you do not intend to
-    # irmc_sysconfig_file: "Profile_SystemConfigSave.json"
-    # irmc_hwconfig_file: "Profile_HWConfigurationSave.json"
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   # path to files to save iRMC profiles to
+  #   #   make sure to not overwrite these files if you do not intend to
+  #   irmc_sysconfig_file: "Profile_SystemConfigSave.json"
+  #   irmc_hwconfig_file: "Profile_HWConfigurationSave.json"
 
   gather_facts: false
 
@@ -48,18 +48,18 @@
       register: hardware_config
       delegate_to: localhost
     - name: Show SystemConfig profile
-      debug:
+      ansible.builtin.debug:
         msg: "{{ system_config.profile }}"
     - name: Show HWConfigurationIrmc profile
-      debug:
+      ansible.builtin.debug:
         msg: "{{ hardware_config.profile }}"
 
     # Write iRMC Profiles to file
     - name: Write SystemConfig profile
-      copy:
+      ansible.builtin.copy:
         content: "{{ system_config.profile }}"
         dest: "{{ irmc_sysconfig_file }}"
     - name: Write HWConfigurationIrmc profile
-      copy:
+      ansible.builtin.copy:
         content: "{{ hardware_config.profile }}"
         dest: "{{ irmc_hwconfig_file }}"

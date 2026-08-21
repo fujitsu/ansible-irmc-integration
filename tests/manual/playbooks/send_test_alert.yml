@@ -1,0 +1,65 @@
+---
+# Copyright 2018-2026 Fsas Technologies Inc.
+# GNU General Public License v3.0+ (see [LICENSE.md](LICENSE.md) or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# tests/manual/run_tests.py がテストケースの前提条件を揃えるために使う運用playbook。
+# examples/ 配下のサンプルとは役割が異なるためこのディレクトリに置く。
+#
+# hosts: iRMC_group なので inventory に登録された全ホストへ自動的に適用される。
+#
+# SystemEventLog にエントリを1件生成する。iRMC の OEM アクション
+# FTSComputerSystem.SendTestAlert を叩く。コレクションにこのアクションを扱うモジュールが
+# 無いため ansible.builtin.uri を使う。
+#
+# 使い方:
+#   ansible-playbook tests/manual/playbooks/send_test_alert.yml -i inventory.ini
+#   ansible-playbook tests/manual/playbooks/send_test_alert.yml -i inventory.ini \
+#     --extra-vars '{"test_alert_severity": "TestAlertSeverityMinor"}'
+#
+# ############################################################################
+# 副作用: iRMC に設定されたアラート通知(メール / SNMP トラップ等)が実際に送信される。
+# ############################################################################
+#
+# 実機で確認した挙動(RX1330 M6 / iRMC S6):
+#   POST -> HTTP 204
+#   SEL に Severity "OK" / Message "Test alert informational" が1件増える
+#   ログが空の状態から実行すると Id 0 として記録される
+#   (SEL は Id 昇順に採番され、一覧は新しい順に返る)
+
+- name: Send an iRMC test alert to generate a SystemEventLog entry
+  connection: local
+  hosts: iRMC_group
+  gather_facts: false
+
+  tasks:
+    # severity は host_vars で機体別に変えられるよう、play の vars ではなくここで default() を
+    # 使う(play vars は host_vars より優先度が高く、host_vars から上書きできない)。
+    # 指定できるのは TestAlertSeverityCritical / Major / Minor / Informational。
+    # Informational は SEL 上 Severity "OK" になり、警告として目立たない。
+    - name: Send test alert
+      ansible.builtin.uri:
+        url: "https://{{ inventory_hostname }}/redfish/v1/Systems/0/Actions/Oem/FTSComputerSystem.SendTestAlert"
+        method: POST
+        url_username: "{{ irmc_user }}"
+        url_password: "{{ irmc_password }}"
+        force_basic_auth: true
+        validate_certs: "{{ validate_certificate }}"
+        body_format: json
+        body:
+          FTSTestAlertType: "{{ test_alert_severity | default('TestAlertSeverityInformational') }}"
+        # Accept を明示しないと iRMC が 406 (Fujitsu.1.0.AcceptNotSupported) を返す。
+        # ansible.builtin.uri は Accept を一切送らない(body_format: json が設定するのは
+        # Content-Type だけ)のに対し、curl は Accept: */* を送るため curl では通る。
+        # ここでは curl と同じものを明示する。Content-Type は body_format 由来のまま残る。
+        headers:
+          Accept: "*/*"
+        status_code: [200, 204]
+      register: test_alert
+      # uri は POST でも changed を立てないが、実際に SEL が1件増えるので明示する
+      changed_when: true
+      delegate_to: localhost
+
+    - name: Show test alert result
+      ansible.builtin.debug:
+        var: test_alert.status
+      delegate_to: localhost

@@ -43,7 +43,7 @@ Example Playbook
       roles:
         - role: fsas.primergy.win_serverview_agents
           vars:
-            password: P@ssw0rd
+            password: <password>
             installer: "/path/to/installer/ServerViewAgents_Win_x64.exe"
     
 License

@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-24
+
+### Changed
+
+- Updated the supported environment
+  - Python: 3.10 or later to 3.14 or later
+  - ansible-core: 2.17.14 or later to 2.21.1 or later
+  - Updated dependent Python packages
+- Replaced `result['warnings']` with `module.warn()` in `irmc_biosbootorder`, `irmc_setvm`
+  and `irmc_fwbios_update`, following the deprecation in ansible-core 2.23
+- The `irmc_email_alert` and `irmc_snmp` roles no longer pass the internal `vars`
+  dictionary to their filter plugins, which will be removed in ansible-core 2.24
+- Waiting for an iRMC session now has an overall timeout, retries transient connection
+  errors, and writes progress to syslog so that a long-running task can be followed
+- Reworked the `EXAMPLES` documentation of every module: task names, FQCN for builtin
+  actions, and the `block` syntax now follow ansible-lint
+- Unified how credentials are written in the example playbooks and in the `EXAMPLES`
+  documentation. Values that used to look like real credentials are now placeholders
+  such as `<username>` and `<password>`
+
+### Fixed
+
+- `irmc_setnextboot`: `bootsource: "None"` failed on some models. The request body that
+  the iRMC accepts differs by model, so both known forms are now tried in order
+- `irmc_setnextboot`: the returned `next_boot` reported the state before the change
+- `irmc_setnextboot`: `bootmode` is now validated against the values that the iRMC
+  reports as allowed, instead of being rejected by the iRMC with an unhelpful error
+- `irmc_profiles`: the `EXAMPLES` documentation could not be parsed as YAML
+- Fixed the example playbooks in the documentation for the `win_set_membership`,
+  `irmc_snmp`, `irmc_email_alert` and `irmc_account_admin` roles. The variable names did
+  not match what the roles actually read, so the examples did not work as written
+
+### Added
+
+- A manual test runner under `tests/manual/` for collection maintainers. It runs the
+  example playbooks against real hardware before a release and keeps the output as
+  evidence. It is not needed to use the collection or to contribute to it
+
 ## [3.0.1] - 2026-05-11
 
 ### Changed

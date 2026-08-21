@@ -18,8 +18,8 @@
 
   # vars:
   #   # iRMC login credentials
-  #   irmc_user: "admin"
-  #   irmc_password: "admin"
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
   #   # Note: set validate_certificate to false for self-signed certificate
   #   validate_certificate: false
   #   # Source of installation image
@@ -27,9 +27,9 @@
   #   server: "192.168.2.1"
   #   share: "share"
   #   image: "ISO.iso"
-  #   vm_domain: "domain"
-  #   vm_user: "domain_user"
-  #   vm_password: "domain_password"
+  #   vm_domain: "<domain>"
+  #   vm_user: "<domain_user>"
+  #   vm_password: "<domain_password>"
 
   gather_facts: false
 

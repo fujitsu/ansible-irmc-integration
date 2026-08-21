@@ -12,16 +12,16 @@
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # adapter: 0
-    # array_all: -1
-    # level: 1
-    # name: "TestRaid-1"
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   adapter: 0
+  #   array_all: -1
+  #   level: 1
+  #   name: "TestRaid-1"
 
   gather_facts: false
 
@@ -36,7 +36,7 @@
       register: raid
       delegate_to: localhost
     - name: Show current RAID configuration
-      debug:
+      ansible.builtin.debug:
         msg: "{{ raid.configuration }}"
 
     - name: Delete all RAID arrays on adapter
@@ -72,5 +72,5 @@
       register: new
       delegate_to: localhost
     - name: Show new RAID configuration
-      debug:
+      ansible.builtin.debug:
         msg: "{{ new.configuration }}"

@@ -8,19 +8,19 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: compare iRMC system and hardware configuration against existing profiles
+- name: Compare iRMC system and hardware configuration against existing profiles
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # path to files with saved iRMC profiles
-    # irmc_sysconfig_file: "Profile_SystemConfigSave.json"
-    # irmc_hwconfig_file: "Profile_HWConfigurationSave.json"
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   # path to files with saved iRMC profiles
+  #   irmc_sysconfig_file: "Profile_SystemConfigSave.json"
+  #   irmc_hwconfig_file: "Profile_HWConfigurationSave.json"
 
   gather_facts: false
 
@@ -47,10 +47,10 @@
       register: hardware_config
       delegate_to: localhost
     - name: Show SystemConfig profile
-      debug:
+      ansible.builtin.debug:
         msg: "{{ system_config.profile }}"
     - name: Show HWConfigurationIrmc profile
-      debug:
+      ansible.builtin.debug:
         msg: "{{ hardware_config.profile }}"
 
     # compare iRMC Profiles to file
@@ -60,7 +60,7 @@
         profile_json2: "{{ system_config.profile }}"
       register: system_config_result
       delegate_to: localhost
-    - fail:
+    - ansible.builtin.fail:
         msg:
           - SystemConfig profile differs from saved profile
           - "{{ system_config_result.comparison_list }}"
@@ -71,7 +71,7 @@
         profile_json2: "{{ hardware_config.profile }}"
       register: hardware_config_result
       delegate_to: localhost
-    - fail:
+    - ansible.builtin.fail:
         msg:
           - HWConfigurationIrmc profile differs from saved profile
           - "{{ hardware_config_result.comparison_list }}"

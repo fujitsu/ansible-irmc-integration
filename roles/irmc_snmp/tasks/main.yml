@@ -1,9 +1,19 @@
 ---
 # tasks file for ./roles/irmc_snmp
 
+# The filter used to receive the internal `vars` dictionary, which is deprecated and
+# will be removed in ansible-core 2.24. Pass only the keys the filter actually reads.
+# Note: the `vars:` keyword below is a task keyword, not that magic variable.
 - name: Generate SNMP settings as IRMC profile
   ansible.builtin.set_fact:
-    snmp_profile: "{{ vars | fsas.primergy.snmp_profile_filter }}"
+    snmp_profile: "{{ profile_params | fsas.primergy.snmp_profile_filter }}"
+  vars:
+    profile_params:
+      ansible_verbosity: "{{ ansible_verbosity }}"
+      snmp: "{{ snmp | default(None) }}"
+      snmp_trap_destination: "{{ snmp_trap_destination | default({}) }}"
+      irmc_snmp_profile_server_version: "{{ irmc_snmp_profile_server_version }}"
+      irmc_snmp_profile_irmcconfig_version: "{{ irmc_snmp_profile_irmcconfig_version }}"
   tags: json
 
 - name: Apply SNMP settings as IRMC profile

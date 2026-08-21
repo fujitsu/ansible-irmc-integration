@@ -15,7 +15,7 @@ description:
 
 requirements:
     - The module needs to run locally.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3'
 
 version_added: "2.4"
@@ -53,22 +53,23 @@ notes:
 
 EXAMPLES = '''
 # Get iRMC license key
-- block:
-  - name: Get iRMC license key
-    fsas.primergy.irmc_license:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-    register: license
-    delegate_to: localhost
-
-  - name: show certificates
-    debug:
-      var: license.license_key
+- name: Get and show iRMC license key
   tags:
     - get
+  block:
+    - name: Get iRMC license key
+      fsas.primergy.irmc_license:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: license
+      delegate_to: localhost
+
+    - name: show certificates
+      ansible.builtin.debug:
+        var: license.license_key
 
 # Set iRMC license key
 - name: Set iRMC license key
