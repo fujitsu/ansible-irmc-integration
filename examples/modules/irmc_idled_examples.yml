@@ -14,16 +14,16 @@
 # ansible-playbook irmc_idled_examples.yml --tags set -e state=Off       # Turn LED off
 # ansible-playbook irmc_idled_examples.yml --tags set -e state=Blinking  # Set LED to blink
 
-- name: irmc_idled - usage examples
+- name: Usage examples for irmc_idled
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
     # LED state configuration (default: Lit if not specified)
     # state: "Lit"    # choices: "Off", "Lit", "Blinking"
@@ -32,21 +32,22 @@
 
   tasks:
     # Get server ID LED state
-    - block:
-      - name: Get ID LED state
-        fsas.primergy.irmc_idled:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "get"
-        register: idled
-        delegate_to: localhost
-      - name: Show iRMC ID LED state
-        debug:
-          var: idled.idled_state
+    - name: Get and show server ID LED state
       tags:
         - get
+      block:
+        - name: Get ID LED state
+          fsas.primergy.irmc_idled:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "get"
+          register: idled
+          delegate_to: localhost
+        - name: Show iRMC ID LED state
+          ansible.builtin.debug:
+            var: idled.idled_state
 
     # Set server ID LED state
     - name: Set server ID LED state

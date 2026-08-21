@@ -1,0 +1,60 @@
+---
+# irmc_license の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: reject ケースは iRMC に対して実際にライセンス適用を試みる。
+#       渡すキーが無効であることが前提。有効なキーに書き換えて実行しないこと。
+#       ライセンスは購入物で、失っても Ansible では復元できない。
+# ############################################################################
+#
+# 電源操作もサーバ再起動も不要。SCCI 1往復(ConfBMCLicenseKey / opcodeext 0x1980)で数秒。
+#
+# 実機で get が空文字列を返すことを確認している(failed=0 で成功はする)。
+# ライセンス未導入なのか読み出しが塞がれているのかはモジュールのコードからは区別できない。
+# そのため「get で読んだ自機のキーを set で書き戻す」往復は行えず、
+# 無効キーが拒否されることをもって set 経路の検証としている。
+#
+# set の正常系はテストできない。ライセンスは復元できず、モジュールの notes によれば
+# キーは system-locked なので他機のものは使えない。
+#
+#   A license key which was read from an iRMC is 'system-locked'.
+#   It can imported to the same iRMC, but not to another iRMC.
+#
+# 使っている無効キーは書式だけ実物に似せたプレースホルダ。署名検証まで到達することが
+# 期待でき、かつ明らかに実在しない値になっている。
+#
+# ############################################################################
+# reject の act は「失敗を期待するステップ」。expect_recap に failed: 1 を書くと
+# ランナーは非0終了を期待する側に切り替わる(README の「失敗することを検証する」を参照)。
+#
+# changed: 0 を併記しているのが安全弁。無効なはずのキーが受理されると changed=1 に
+# なるのでここで NG として捕まる。その場合はテストの不備ではなく、
+# ライセンス状態を確認する必要があるという意味。
+# ############################################################################
+#
+# before / after の get は、往復してもライセンスが壊れていないことの確認。
+# 両方とも同じ値(現状は空文字列)になるのが正常。
+
+- module: irmc_license
+  name: get
+  playbook: irmc_license_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_license
+  name: reject
+  playbook: irmc_license_examples.yml
+  steps:
+    - name: before
+      tag: get
+    - name: act
+      description: 無効なキーの適用を試み、iRMC が拒否することを確認する(失敗を期待するステップ)
+      tag: set
+      vars: {license_key: "ABDC-EFGH-IJKL-MNOP-QRST-UVWX-YZ"}
+      expect_recap: {failed: 1, changed: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

@@ -8,36 +8,37 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_ntp - usage examples
+- name: Usage examples for irmc_ntp
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
   tasks:
     # Get iRMC time settings
-    - block:
-      - name: Get iRMC time settings
-        fsas.primergy.irmc_ntp:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "get"
-        register: time
-        delegate_to: localhost
-      - name: Show iRMC time settings
-        debug:
-          var: time.time_settings
+    - name: Get and show iRMC time settings
       tags:
         - get
+      block:
+        - name: Get iRMC time settings
+          fsas.primergy.irmc_ntp:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "get"
+          register: time
+          delegate_to: localhost
+        - name: Show iRMC time settings
+          ansible.builtin.debug:
+            var: time.time_settings
 
     # Set iRMC time option(s)
     - name: Set iRMC time option(s)

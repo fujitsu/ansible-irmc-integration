@@ -12,19 +12,19 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: set BIOS boot order permanently and 'next boot' device
+- name: Set BIOS boot order permanently and 'next boot' device
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # boot_key: "DeviceName",
-    # boot_device: "(Bus 02 Dev 00)PCI RAID Adapter"
-    # next_boot_device: "HL-DT-ST DVDRAM GHB0N"
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   boot_key: "DeviceName",
+  #   boot_device: "(Bus 02 Dev 00)PCI RAID Adapter"
+  #   next_boot_device: "HL-DT-ST DVDRAM GHB0N"
 
   gather_facts: false
 

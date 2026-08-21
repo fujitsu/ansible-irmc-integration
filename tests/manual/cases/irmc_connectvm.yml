@@ -1,0 +1,78 @@
+---
+# irmc_connectvm の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# 仮想メディア系の3モジュール(getvm / setvm / connectvm)は密接に関連するが、
+# エビデンスは独立して必要なのでケース定義もモジュールごとに分けてある。
+#
+# HDImage は現行機器の iRMC では対応していないためテスト対象外(connectHD / disconnectHD は使わない)。
+#
+# メディアの所在(share_type / server / share / image)は inventory.ini の
+# [iRMC_group:vars] から供給される。ステップの vars に書くと --extra-vars として
+# 全ホストを上書きしてしまうため、ここには書かない。
+#
+# connectvm には対になる get が無いので、before / after は irmc_getvm_examples.yml で観測する
+# (ステップごとの playbook 上書き。'/' を含まない値は --playbook-dir からの相対)。
+# エビデンスは getvm の結果の CDImage フィールド(Connected / Disconnected)の変化。
+#
+# 状態依存の挙動:
+#   connectCD   : 接続中(Connected)だと skipped
+#   disconnectCD: 未接続(Disconnected)だと skipped
+#   setvm       : 接続中だと failed
+# 失敗経路は今回カバーせず、各ケースが arrange で前提を整えて回避する
+# (必要なら expect_recap に failed: 1 を書けば検証できる)。
+#
+# arrange (media) で実在するメディアを設定し直しているのは、接続できないメディアが
+# 設定されていると connectCD が失敗するため。irmc_setvm のケースが arrange の直後で
+# 中断してプレースホルダ名が残っていた場合の後始末も兼ねる。
+#
+# 注意: --name connect は disconnect にも部分一致する(--name disconnect は disconnect のみ)。
+#
+# 電源操作は不要。
+
+- module: irmc_connectvm
+  name: connect
+  playbook: irmc_connectvm_examples.yml
+  steps:
+    - name: arrange (disconnect)
+      description: connectCD は接続中だと skip する。setvm も接続中は失敗するため先に切断する
+      tag: disconnectCD
+    - name: arrange (media)
+      description: 実在するメディアを設定する(接続できないメディアだと act が失敗する)
+      playbook: irmc_setvm_examples.yml
+      tag: setcd
+    - name: before
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+    - name: act
+      tag: connectCD
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+      expect_recap: {failed: 0}
+
+- module: irmc_connectvm
+  name: disconnect
+  playbook: irmc_connectvm_examples.yml
+  steps:
+    - name: arrange (disconnect)
+      description: 次の setvm が通るように一度切断する(既に未接続なら skipped で正常)
+      tag: disconnectCD
+    - name: arrange (media)
+      description: 実在するメディアを設定する
+      playbook: irmc_setvm_examples.yml
+      tag: setcd
+    - name: arrange (connect)
+      description: disconnectCD は未接続だと skip するため接続しておく
+      tag: connectCD
+    - name: before
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+    - name: act
+      tag: disconnectCD
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      playbook: irmc_getvm_examples.yml
+      tag: getcd
+      expect_recap: {failed: 0}

@@ -1,0 +1,82 @@
+---
+# irmc_compare_profiles の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# このモジュールは iRMC に一切アクセスしない。module_args は profile_json1 /
+# profile_json2 / profile_path1 / profile_path2 の4つだけで、irmc_url も認証情報も無い。
+# 純粋にローカルで JSON を比較するだけなので、実機が到達不能でも通る。
+# テストスイート中で唯一、実機を必要としないケース。
+# ############################################################################
+#
+# 電源操作も不要で、数ミリ秒で終わる。
+#
+# hosts: iRMC_group なので --limit を付けないとホスト数だけ同じ比較が繰り返される
+# (無害だが出力が重複する)。
+#
+# プロファイルが違っても fail_json せず comparison_result: false で正常終了するため、
+# 一致・不一致の両方をケースにできる。
+#
+# ############################################################################
+# expect_recap の skipped が比較結果そのものの検証になっている。
+#
+# json タグの block は3タスク(モジュール + debug 2つ)で、2つ目の debug には
+# when: result.comparison_list is defined が付いている。comparison_list は
+# プロファイルが異なるときだけ設定されるので、RECAP がこうなる。
+#
+#   一致   -> comparison_list 未設定 -> debug が skip -> ok=2 skipped=1
+#   不一致 -> comparison_list 設定   -> debug が実行 -> ok=3 skipped=0
+# ############################################################################
+#
+# ファイル指定(path タグ)はケース化していない。irmc_compare_profiles.py は
+# profile_json* が指定されていればそちらを優先し、どちらの経路も同じ
+# compare_irmc_profile() に合流する。違いは json.loads() か json.load(open()) かだけで、
+# 文字列指定でカバーできないのは open() の例外処理(status 13 / 15)に限られる。
+#
+# 将来 path タグを足す場合の注意: モジュールが素の open() を使うため、カレントディレクトリは
+# playbook のある examples/modules/ になる(irmc_certificate と同じ。README に記載あり)。
+#
+# JSON の入れ子クォートは気にしなくてよい。ランナーが shlex.join() でシェル用に
+# クォートしてから script -c に渡すため。
+#
+# 失敗経路のうち「不正な JSON」は invalid ケースでカバーしている。
+# invalid は expect_recap に failed: 1 を書いた「失敗を期待するステップ」で、
+# iRMC に接続しないため実機なしでランナーのこの機能の回帰テストになる。
+#   profile_json1 も profile_path1 も未指定 : status 10（今回カバーしていない）
+#   不正な JSON                             : status 12（invalid ケース）
+
+- module: irmc_compare_profiles
+  name: same
+  playbook: irmc_compare_profiles_examples.yml
+  steps:
+    - name: act
+      description: 同一の JSON を比較する。comparison_list が出ないので debug が1つ skip される
+      tag: json
+      vars:
+        profile_json1: '{"Server":{"SystemConfig":{"IrmcConfig":{"NetworkServices":{"Snmp":{"Enabled":true,"Port":161}}}}}}'
+        profile_json2: '{"Server":{"SystemConfig":{"IrmcConfig":{"NetworkServices":{"Snmp":{"Enabled":true,"Port":161}}}}}}'
+      expect_recap: {changed: 0, failed: 0, skipped: 1}
+
+- module: irmc_compare_profiles
+  name: differ
+  playbook: irmc_compare_profiles_examples.yml
+  steps:
+    - name: act
+      description: 値の相違(Enabled)とキーの増加(Community)を含む JSON を比較する
+      tag: json
+      vars:
+        profile_json1: '{"Server":{"SystemConfig":{"IrmcConfig":{"NetworkServices":{"Snmp":{"Enabled":true,"Port":161}}}}}}'
+        profile_json2: '{"Server":{"SystemConfig":{"IrmcConfig":{"NetworkServices":{"Snmp":{"Enabled":false,"Port":161,"Community":"public"}}}}}}'
+      expect_recap: {changed: 0, failed: 0, skipped: 0}
+
+- module: irmc_compare_profiles
+  name: invalid
+  playbook: irmc_compare_profiles_examples.yml
+  steps:
+    - name: act
+      description: 不正な JSON を渡し status 12 で失敗することを確認する(失敗を期待するステップ)
+      tag: json
+      vars:
+        profile_json1: 'this is not json'
+        profile_json2: '{}'
+      expect_recap: {failed: 1, changed: 0}

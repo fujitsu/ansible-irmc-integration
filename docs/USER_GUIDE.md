@@ -27,15 +27,15 @@ This document is intended for users with basic knowledge of Ansible.
 - Linux
   (For Windows, refer to "5. Frequently Asked Questions (FAQ)" under
   "[Can I run Ansible on Windows?](#can-i-run-ansible-on-windows))"
-- Python 3.10
+- Python 3.14
 
 #### Python Modules
 
-- `ansible` >= 10.7.0
+- `ansible` >= 14.1.0
 - `pywinrm` >= 0.5.0
-- `requests` >= 2.33.1
+- `requests` >= 2.34.2
 - `requests_toolbelt` >= 1.0.0
-- `urllib3` >= 2.6.3
+- `urllib3` >= 2.7.0
 
 ### Setting Up Ansible Execution Environment
 
@@ -96,7 +96,7 @@ ansible_winrm_server_cert_validation=ignore
 Retrieve and display the configuration and settings of the specified iRMC device:
 
 ```shell
-$ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=P@ssw0rd! validate_certs=false"
+$ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=<password> validate_certs=false"
 localhost | SUCCESS => {
     "changed": false,
     "facts": {

@@ -18,13 +18,16 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3'
 
 version_added: "2.4"
 
 author:
     - Nakamura Takayuki (@nakamura-taka)
+
+notes:
+    - See "Fsas - Specification iRMC Restful BIOS1.12_IRMC1.11" (<https://support.ts.fujitsu.com/IndexDownload.asp?Softwareguid=34A6AA91-F241-4045-8492-6F1D921C8B57>)
 
 options:
     irmc_url:
@@ -65,39 +68,41 @@ options:
 
 EXAMPLES = r'''
 # List iRMC profiles
-- block:
-  - name: List iRMC profiles
-    fsas.primergy.irmc_profiles:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "list"
-    delegate_to: localhost
-    register: list_profiles
-  - name: Show list of profiles
-    debug:
-      var: list_profiles.profiles
+- name: List and show iRMC profiles
   tags:
     - list_profiles
+  block:
+    - name: List iRMC profiles
+      fsas.primergy.irmc_profiles:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "list"
+      delegate_to: localhost
+      register: list_profiles
+    - name: Show list of profiles
+      ansible.builtin.debug:
+        var: list_profiles.profiles
 
 # Get specific profile
-- block:
-  - name: Get specific profile
-    fsas.primergy.irmc_profiles:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-      profile: "HWConfigurationIrmc"
-    delegate_to: localhost
-    register: get_profile
-  - name: Show specific profile
-    debug:
-      var: get_profile.profile
+- name: Get, show and save a specific profile
   tags:
     - get_profile
+  block:
+    - name: Get specific profile
+      fsas.primergy.irmc_profiles:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+        profile: "HWConfigurationIrmc"
+      delegate_to: localhost
+      register: get_profile
+    - name: Show specific profile
+      ansible.builtin.debug:
+        var: get_profile.profile
 
 # Create profile
 - name: Create profile
@@ -138,9 +143,6 @@ EXAMPLES = r'''
   delegate_to: localhost
   tags:
     - import_profile
-
-notes:
-    - See "Fsas - Specification iRMC Restful BIOS1.12_IRMC1.11" (<https://support.ts.fujitsu.com/IndexDownload.asp?Softwareguid=34A6AA91-F241-4045-8492-6F1D921C8B57>)
 '''
 
 RETURN = r'''

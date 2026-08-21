@@ -1,6 +1,13 @@
 /ansible.cfg
 /inventory.ini
+/group_vars/
+/host_vars/
 /tests/output/
+/tests/manual/results/
+/tests/manual/assets/firmware/
+/tests/manual/assets/certs/*
+!/tests/manual/assets/certs/Makefile
+!/tests/manual/assets/certs/README.md
 /fujitsu-primergy-*.tar.gz
 /fsas_temp_ns-primergy-*.tar.gz
 /fsas-primergy-*.tar.gz

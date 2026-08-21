@@ -1,0 +1,45 @@
+---
+# irmc_task の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# irmc_task は読み取り専用。command は list / get の2つだけで changed は常に false。
+# 電源操作もサーバ再起動も伴わないので arrange / before / after は不要。
+# expect_recap に changed: 0 を入れて、読み取り専用であること自体を表明している。
+#
+# list はタスク数 N に対して 1+N 回の HTTP GET を発行する(Tasks コレクションを1回取得し、
+# メンバーごとに個別に GET する)。実機で約100件だったので約101リクエスト。
+# BIOS 起動のような分単位の待ちではないが、get に比べて桁違いに重い。
+#
+# ############################################################################
+# id: 1 は「最古のタスク」を狙った既定値であって、存在の保証ではない。
+# タスク履歴が無い機体では 404 ("Failed to get task data") で失敗する。
+# その場合はケースの不備ではなく機体の状態なので、results/irmc_task/list.txt の
+# "Id" から実在するものを選び、下の vars: {id: N} を書き換えること。
+# ケースを list → get の順に並べてあるのは、直前の list のエビデンスから選び直せるようにするため。
+# ############################################################################
+#
+# id は inventory や host_vars に置かない。変数名 id を irmc_eventlog_examples.yml とも
+# 共有しており、そちらへ波及してしまうため。ステップの vars に書けば --extra-vars として
+# その実行にだけ効く。
+#
+# 失敗経路は今回カバーしていない(必要なら expect_recap に failed: 1 を書けば検証できる)。
+#   get で id 未指定 : status 10 "Command 'get' requires 'id' parameter to be set!"
+#   存在しない id    : status 404 "Failed to get task data"
+
+- module: irmc_task
+  name: list
+  playbook: irmc_task_examples.yml
+  steps:
+    - name: act
+      tag: list
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_task
+  name: get
+  playbook: irmc_task_examples.yml
+  steps:
+    - name: act
+      description: 最古のタスク(Id 1)を取得する。404 になる場合は list の結果から選び直す
+      tag: get
+      vars: {id: 1}
+      expect_recap: {changed: 0, failed: 0}

@@ -12,18 +12,18 @@
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # original user to be deleted
-    #     Note: make sure this user has all the right it needs
-    # original_user: "admin"
-    # original_password: "admin"
-    # new user to be created
-    #     Note: make sure this user does not yet exist
-    # new_user: "root"
-    # new_password: "root"
+  # vars:
+  #   # iRMC login credentials
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   # original user to be deleted
+  #   #     Note: make sure this user has all the right it needs
+  #   original_user: "<original_username>"
+  #   original_password: "<original_password>"
+  #   # new user to be created
+  #   #     Note: make sure this user does not yet exist
+  #   new_user: "<new_username>"
+  #   new_password: "<new_password>"
   gather_facts: false
 
   tasks:
@@ -39,7 +39,7 @@
       register: original_data
       delegate_to: localhost
     - name: Show original iRMC user details
-      debug:
+      ansible.builtin.debug:
         msg: "{{ original_data.user }}"
 
     # Create new user account
@@ -101,7 +101,7 @@
       register: new_data
       delegate_to: localhost
     - name: Show original iRMC user details
-      debug:
+      ansible.builtin.debug:
         msg: "{{ new_data.user }}"
 
     # Delete original user account

@@ -33,15 +33,15 @@ Ansibleコレクションのセットアップ方法やロールの使用例、
   （Windowsの場合は「5. よくある質問 (FAQ)」の
   「[WindowsでAnsibleを実行できますか？](#windowsでansibleを実行できますか)」
   を参照）
-- Python 3.10
+- Python 3.14
 
 #### Pythonモジュール
 
-- `ansible` >= 10.7.0
+- `ansible` >= 14.1.0
 - `pywinrm` >= 0.5.0
-- `requests` >= 2.33.1
+- `requests` >= 2.34.2
 - `requests_toolbelt` >= 1.0.0
-- `urllib3` >= 2.6.3
+- `urllib3` >= 2.7.0
 
 ### Ansible実行環境のセットアップ
 
@@ -103,7 +103,7 @@ ansible_winrm_server_cert_validation=ignore
 指定したiRMC機器の構成・設定などを取得し表示します：
 
 ```shell
-$ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=P@ssw0rd! validate_certs=false"
+$ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=<password> validate_certs=false"
 localhost | SUCCESS => {
     "changed": false,
     "facts": {

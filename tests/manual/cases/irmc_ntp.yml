@@ -1,0 +1,54 @@
+---
+# irmc_ntp の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# set ケースは irmc_ntp がサポートする5パラメータすべてを arrange と act で違う値にし、
+# before/after にすべての差が出るようにしている。
+#
+# 副作用に注意すること。このケースは機体の時刻設定を実際に書き換える。
+#
+#   - arrange の time_mode: "System RTC" は NTP 同期を一時的に止める。act で "NTP" に
+#     戻すが、arrange の直後に中断した場合は同期が止まったまま残る
+#   - rtc_mode と time_zone_location は機体ごとに値が異なっていた(RX2450 M2 は
+#     "UTC/GMT" + "UTC" 運用)。このケースを流すと act の値で上書きされ、そのまま残る
+#
+# irmc_ntp は現在値に関わらず changed=True を返すため、expect_recap の changed: 1 は
+# 「タスクが走った」ことしか示さない。実質的なエビデンスは before/after の5項目の差。
+#
+# time_mode の "MMB NTP" はブレードシャーシの管理ブレード用なのでここでは使わない。
+
+- module: irmc_ntp
+  name: get
+  playbook: irmc_ntp_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_ntp
+  name: set
+  playbook: irmc_ntp_examples.yml
+  steps:
+    - name: arrange
+      description: 5パラメータすべてを act とは違う値にし、before/after に差が出るようにする
+      tag: set
+      vars:
+        time_mode: "System RTC"
+        rtc_mode: "UTC/GMT"
+        time_zone_location: "Europe/Berlin"
+        ntp_server_primary: "192.0.2.1"
+        ntp_server_secondary: "192.0.2.2"
+    - name: before
+      tag: get
+    - name: act
+      tag: set
+      vars:
+        time_mode: "NTP"
+        rtc_mode: "local time"
+        time_zone_location: "Asia/Tokyo"
+        ntp_server_primary: "ntp1.jst.mfeed.ad.jp"
+        ntp_server_secondary: "ntp2.jst.mfeed.ad.jp"
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

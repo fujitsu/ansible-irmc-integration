@@ -262,15 +262,86 @@ def get_irmc_json(jsondata, keys):
     return data
 
 
-def waitForSessionToFinish(module, sessionId):
+def waitForSessionToFinish(module, sessionId, timeout=3600, poll_interval=10,
+                           error_retries=6, log_interval=60):
+    """指定されたiRMCセッションが終了するまで待機します。
+
+    プロファイル関連の処理は、iRMCがサーバをgraceful shutdownさせてBIOSパラメータを
+    バックアップしてから進むため数分かかります(RX2450 M2でブート順取得が実測7分38秒、
+    ブート順の既定復帰が実測約10分半)。
+    待機中の状況は module.log() でsyslogへ即座に書き出すため、モジュールの実行中でも
+    別端末から追えます(module.warn() はモジュール終了までバッファされるため使えません)。
+
+        journalctl -t ansible-<コレクション名>.<モジュール名> -f
+
+    引数:
+
+        module        - AnsibleModuleオブジェクト
+        sessionId     - 待機対象のセッションID
+        timeout       - 全体の制限時間(秒)。ファームウェア更新など正当に長時間かかる処理が
+                        あるため既定値は大きく取っており、無限ループを防ぐことだけが目的
+        poll_interval - ポーリング間隔(秒)
+        error_retries - 許容する連続通信エラー回数。iRMCはプロファイル処理中に一時的に
+                        接続を拒否することがあり、HTTP層のリトライは約3秒しか粘らない
+        log_interval  - 進捗メッセージを出す間隔(秒)
+
+    戻り値:
+
+        int   - HTTPステータス、または28(タイムアウト)・29(セッションがエラー終了)
+        object - レスポンスデータ
+        str   - 結果メッセージ
+
+    注意事項:
+
+        - timeoutを超えた場合はstatus 28とセッションログのURLを含むメッセージを返す
+        - 通信エラーはerror_retries回まで再試行し、超えたらそのstatusを返す
+        - HTTPレベルのエラー(404など)は再試行せず即座に返す
+    """
+    session_url = "https://{0}/sessionInformation/{1}".format(module.params['irmc_url'], sessionId)
+    # waitForIrmcSessionsInactive() は終了済みのセッションに対しても呼ぶため、実際に待つことに
+    # なったときだけ出す。そうしないと本命のセッションが終了済みセッションのログに埋もれる。
+    waiting_msg = "Waiting for session {0} to finish (timeout {1}s). Session log: {2}/log".format(
+        sessionId, timeout, session_url)
+    announced = False
+
+    started = time.time()
+    deadline = started + timeout
+    last_log = started
+    consecutive_errors = 0
     while True:
         status, sdata, msg = irmc_redfish_get(module, "sessionInformation/{0}/status".format(sessionId))
-        if status < 100 or (status not in (200, 202, 204)):
+        if status < 100:
+            # Transport error. Retry, since this is often transient.
+            if not announced:
+                module.log(waiting_msg)
+                announced = True
+            consecutive_errors += 1
+            module.log("Session {0}: request failed ({1}/{2}): {3}".format(
+                sessionId, consecutive_errors, error_retries, msg))
+            if consecutive_errors > error_retries or time.time() >= deadline:
+                return status, sdata, msg
+            time.sleep(poll_interval)
+            continue
+        if status not in (200, 202, 204):
             return status, sdata, msg
+        consecutive_errors = 0
 
         sstatus = get_irmc_json(sdata.json(), ["Session", "Status"])
         if "terminated" not in sstatus:
-            time.sleep(10)
+            if not announced:
+                module.log(waiting_msg)
+                announced = True
+            now = time.time()
+            if now >= deadline:
+                msg = ("Timeout ({0}s) waiting for session {1} to finish "
+                       "(last status: '{2}'). See {3}/log").format(
+                    timeout, sessionId, sstatus, session_url)
+                return 28, sdata, msg
+            if now - last_log >= log_interval:
+                module.log("Session {0} still '{1}' after {2}s (timeout {3}s)".format(
+                    sessionId, sstatus, int(now - started), timeout))
+                last_log = now
+            time.sleep(poll_interval)
         else:
             msg = "Session result: {0}".format(sstatus)
             if "error" in sstatus:

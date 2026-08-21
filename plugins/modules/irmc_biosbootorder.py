@@ -18,7 +18,7 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3'
 
 version_added: "2.4"
@@ -263,7 +263,7 @@ def preliminary_parameter_check(module):
 
         if get_irmc_json(sysdata.json(), 'PowerState') == 'On':
             result['skipped'] = True
-            result['warnings'] = 'Server is powered on. Cannot continue.'
+            module.warn('Server is powered on. Cannot continue.')
             module.exit_json(**result)
 
 

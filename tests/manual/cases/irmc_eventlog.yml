@@ -1,0 +1,84 @@
+---
+# irmc_eventlog の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: clear ケースは iRMC のイベントログを実際に消去する。
+#       Ansible にも iRMC にも復元手段は無い。障害解析の履歴が失われるため、
+#       調査中の機体では実行しないこと。
+# ############################################################################
+#
+# 電源操作もサーバ再起動も不要。list は1リクエストで済む
+# (get_irmc_eventlog_info() はメンバーの辞書をそのまま解析するので、
+#  irmc_task の list のようなエントリごとの GET は発生しない)。
+#
+# clear は現在値を見ず常に changed=True を返す(冪等判定なし)。
+# 空のログでも list は成功する(eventlog: [] になるだけ)ので after は問題なく通る。
+#
+# 対象は SystemEventLog のみ。InternalEventLog は同じ関数を URL の1セグメント違いで
+# 呼ぶだけでコード経路のカバーがほぼ同じなため、破壊的な clear を2種類分は実行しない。
+# 必要になったら list_internaleventlog / get_internaleventlog / clear_internaleventlog の
+# タグで同じ構成のケースを足せる。
+#
+# ############################################################################
+# get と clear の arrange は tests/manual/playbooks/send_test_alert.yml で SEL に
+# エントリを1件生成する。その副作用として、iRMC に設定されたアラート通知
+# (メール / SNMP トラップ等)が実際に送信される。
+# ############################################################################
+#
+# 実機で確認した clear の挙動:
+#   消去後は完全に空になる。「ログを消去した」旨のマーカーは残らない
+#   Id は 0 から採番し直される
+#
+# arrange があるので id: 0 は常に存在する。ログが空なら生成したエントリが Id 0 になり、
+# 空でなければ既存の最古が Id 0 として残っているため。
+# 唯一の例外は、SEL が上限に達して古いエントリが押し出された場合。そのときは
+# results/irmc_eventlog/list.txt の "Id" から実在するものを選び、vars を書き換える。
+#
+# ケースは list -> get -> clear の順。clear を最後に置き、流し終わりを空の状態にする。
+#
+# id は inventory や host_vars に置かない。変数名 id を irmc_task_examples.yml とも
+# 共有しており、そちらへ波及してしまうため。ステップの vars に書けば --extra-vars として
+# その実行にだけ効く。
+#
+# 失敗経路は今回カバーしていない(必要なら expect_recap に failed: 1 を書けば検証できる)。
+#   get で id 未指定  : status 10 "Command 'get' requires 'id' parameter to be set!"
+#   存在しない id     : "Failed to get Log data at ..." で fail
+
+- module: irmc_eventlog
+  name: list
+  playbook: irmc_eventlog_examples.yml
+  steps:
+    - name: act
+      tag: list_systemeventlog
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_eventlog
+  name: get
+  playbook: irmc_eventlog_examples.yml
+  steps:
+    - name: arrange
+      description: SEL が空でも Id 0 が存在するようにエントリを1件生成する
+      playbook: tests/manual/playbooks/send_test_alert.yml
+    - name: act
+      description: 最古のエントリ(Id 0)を取得する
+      tag: get_systemeventlog
+      vars: {id: 0}
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_eventlog
+  name: clear
+  playbook: irmc_eventlog_examples.yml
+  steps:
+    - name: arrange
+      description: before と after に差が出るようにエントリを1件生成する
+      playbook: tests/manual/playbooks/send_test_alert.yml
+    - name: before
+      tag: list_systemeventlog
+    - name: act
+      description: SystemEventLog を消去する。元に戻せない
+      tag: clear_systemeventlog
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: list_systemeventlog
+      expect_recap: {failed: 0}
