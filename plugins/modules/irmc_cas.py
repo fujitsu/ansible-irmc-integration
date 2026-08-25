@@ -103,7 +103,7 @@ EXAMPLES = r'''
   register: cas
   delegate_to: localhost
 - name: Show iRMC CAS data
-  debug:
+  ansible.builtin.debug:
     msg: "{{ cas.cas }}"
 
 # Set CAS data

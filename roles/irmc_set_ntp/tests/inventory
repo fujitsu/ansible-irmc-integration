@@ -1,2 +1,5 @@
 [iRMC_group]
-<irmc_url> irmc_user=<irmc_username> irmc_password=<irmc_password> validate_certificate=false
+<hostname-or-ipaddress> irmc_user=admin irmc_password=<password>
+
+[iRMC_group:vars]
+validate_certificate=false

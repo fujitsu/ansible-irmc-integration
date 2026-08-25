@@ -11,26 +11,26 @@
 #    - iRMC needs to be supplied with an eLCM License
 #    - iRMC needs to be supplied with an eLCM SD-Card
 
-- name: offline update a PRIMERGY server via eLCM
+- name: Offline update a PRIMERGY server via eLCM
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
-    # elcm_server: "https://support.ts.fujitsu.com"
-    # elcm_catalog: "DownloadManager/globalflash/GF_par_tree.exe"
-    # elcm_use_proxy: false
-    # elcm_proxy_url: "http://proxy.local"
-    # elcm_proxy_port: "8080"
-    # elcm_proxy_user: "user"
-    # elcm_proxy_password: "password"
-    # elcm_component: "PrimSupportPack-Win"
-    # elcm_subcomponent: "FSC_SCAN"
-    # elcm_skip_hcl_verify: true
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
+  #   elcm_server: "https://support.ts.fujitsu.com"
+  #   elcm_catalog: "DownloadManager/globalflash/GF_par_tree.exe"
+  #   elcm_use_proxy: false
+  #   elcm_proxy_url: "http://proxy.local"
+  #   elcm_proxy_port: "8080"
+  #   elcm_proxy_user: "user"
+  #   elcm_proxy_password: "password"
+  #   elcm_component: "PrimSupportPack-Win"
+  #   elcm_subcomponent: "FSC_SCAN"
+  #   elcm_skip_hcl_verify: true
 
   gather_facts: false
 
@@ -46,7 +46,7 @@
       delegate_to: localhost
 
     - name: Check that server is 'Off'
-      fail:
+      ansible.builtin.fail:
         msg: "Cannot continue, server is 'On'"
       when: powerstate.power_state=="On"
 

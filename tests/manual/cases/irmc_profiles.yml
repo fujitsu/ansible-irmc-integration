@@ -1,0 +1,123 @@
+---
+# irmc_profiles の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: import はテストケース化していない。
+#       checkandupdate_irmc_profile() が @Processing: 'execute' を立て、
+#       BiosBootOrder があれば BootOrderApply: True も付けるため、
+#       プロファイルの設定をサーバに実際に適用する。
+#       自機から get したプロファイルを戻すだけでも BIOS 適用と再起動が走り、
+#       無変更にはならない。
+# ############################################################################
+#
+# ############################################################################
+# 電源を操作するのは create だけ。list / get / delete は電源に触れない。
+#
+# create の所要時間と電源の扱いは、開始時のサーバの電源状態で変わる(いずれも実測)。
+#
+#   電源オン(BIOS起動済み) : すぐ終わる。電源はオンのまま
+#   電源オフ               : 電源投入 -> 取得 -> 電源オフ と動き、開始時の状態に戻す。
+#                            BIOS POST を待つため数分かかる
+#                            (irmc_raid get の同等処理が実測3分45秒。内訳に
+#                             "System PowerOn by OOB Raid Config" と
+#                             "PowerOn delay 175 sec" を含む)
+#
+# 電源オフから流すと止まって見えるが待つこと。
+# ############################################################################
+#
+# HWConfigurationIrmc の中身は機体構成による。実機(RX1330 M6)では
+# Adapters/RAIDAdapter だけで、irmc_raid get が取得する
+# Server/HWConfigurationIrmc/Adapters/RAIDAdapter とほぼ同じ内容だった。
+#
+# profile にネストしたパスは使えない。create は PARAM_PATH=Server/{profile}、
+# delete は ProfileManagement/{profile} と参照の仕方が違うため、両者が一致するのは
+# トップレベル名だけ。モジュール自身の EXAMPLES が使う HWConfigurationIrmc を採用している。
+#
+# create / delete は対象の存在有無で skip する(冪等)。
+#
+#   コマンド   対象がある                     対象が無い
+#   --------   ----------------------------   ----------------------------
+#   create     409 -> skipped(セッションも    200 -> changed(セッション完了を待つ)
+#                    作られない)
+#   delete     200 -> changed                 404 -> skipped
+#
+# arrange に expect_recap を付けていないのはこのため。存在有無に応じて changed にも
+# skipped にもなるのが正常。
+#
+# ############################################################################
+# ケースは list -> create -> get -> delete の順。この順なら create の実行は1回で済む。
+# get と delete の arrange は直前のケースが作ったプロファイルを見つけて 409 skip で抜ける。
+#
+# ただし各ケースは自己充足しており、--name で個別に流しても動く。その場合は
+# arrange の create が実際に走るため数分かかる。
+# ############################################################################
+#
+# get は制御ノードの /tmp/<profile_name>.json を書き換える(example playbook の copy タスク)。
+# このタスクは初回は changed=1、内容が同じ2回目以降は changed=0 になる(どちらも実測)。
+# 安定しないので get の expect_recap は failed: 0 だけにしてある。
+#
+# create は iRMC のセッション(ProfileParametersObtain)も生成する。
+# irmc_session のケースが arrange に使っているのと同じ仕組み。
+#
+# 失敗経路は今回カバーしていない(必要なら expect_recap に failed: 1 を書けば検証できる)。
+#   profile 未指定で get / create / delete : status 11
+#   存在しないプロファイルの get           : 404
+
+- module: irmc_profiles
+  name: list
+  playbook: irmc_profiles_examples.yml
+  steps:
+    - name: act
+      tag: list_profiles
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_profiles
+  name: create
+  playbook: irmc_profiles_examples.yml
+  steps:
+    - name: arrange
+      description: 既存だと create が 409 で skip されるため先に削除する(無ければ skip)
+      tag: delete_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+    - name: before
+      tag: list_profiles
+    - name: act
+      description: プロファイルを生成する。電源オフから始めると電源投入と BIOS POST で数分かかる
+      tag: create_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: list_profiles
+      expect_recap: {failed: 0}
+
+- module: irmc_profiles
+  name: get
+  playbook: irmc_profiles_examples.yml
+  steps:
+    - name: arrange
+      description: 取得対象を確実に存在させる(既にあれば skip)
+      tag: create_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+    - name: act
+      tag: get_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+      expect_recap: {failed: 0}
+
+- module: irmc_profiles
+  name: delete
+  playbook: irmc_profiles_examples.yml
+  steps:
+    - name: arrange
+      description: 削除対象を確実に存在させる(既にあれば skip)
+      tag: create_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+    - name: before
+      tag: list_profiles
+    - name: act
+      tag: delete_profile
+      vars: {profile_name: "HWConfigurationIrmc"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: list_profiles
+      expect_recap: {failed: 0}

@@ -8,50 +8,52 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_getvm - usage examples
+- name: Usage examples for irmc_getvm
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
   tasks:
     # Get Virtual CD data
-    - block:
-      - name: Get Virtual CD data
-        fsas.primergy.irmc_getvm:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          vm_type: CDImage
-        register: cddata
-        delegate_to: localhost
-      - name: Show Virtual CD data
-        debug:
-          var: cddata.virtual_media_data
+    - name: Get and show Virtual CD data
       tags:
         - getcd
+      block:
+        - name: Get Virtual CD data
+          fsas.primergy.irmc_getvm:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            vm_type: CDImage
+          register: cddata
+          delegate_to: localhost
+        - name: Show Virtual CD data
+          ansible.builtin.debug:
+            var: cddata.virtual_media_data
 
     # Get Virtual HD data
-    - block:
-      - name: Get Virtual HD data
-        fsas.primergy.irmc_getvm:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          vm_type: HDImage
-        register: hddata
-        delegate_to: localhost
-      - name: Show Virtual HD data
-        debug:
-          var: hddata.virtual_media_data
+    - name: Get and show Virtual HD data
       tags:
         - gethd
+      block:
+        - name: Get Virtual HD data
+          fsas.primergy.irmc_getvm:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            vm_type: HDImage
+          register: hddata
+          delegate_to: localhost
+        - name: Show Virtual HD data
+          ansible.builtin.debug:
+            var: hddata.virtual_media_data

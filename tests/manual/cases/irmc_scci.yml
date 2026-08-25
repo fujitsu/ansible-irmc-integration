@@ -1,0 +1,74 @@
+---
+# irmc_scci の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: write ケースは iRMC の設置場所(ConfigSpace 0x200)を実際に書き換える。
+#       元の値は保存されないので、流す前に read で控えておくこと。
+#       流し終わると "manual test - act" が残る。戻すには次を実行する。
+#
+#         uv run ansible-playbook -i inventory.ini \
+#           examples/modules/irmc_scci_examples.yml --tags write \
+#           -e server_location="<元の値>" --limit <host>
+# ############################################################################
+#
+# 電源操作もサーバ再起動も不要。SCCI 1往復で数秒。
+#
+# 対象は read / write(ConfigSpace の読み書き)だけ。irmc_scci 固有の機能で
+# 他モジュールでは代替できないため。他のコマンドを対象外にした理由は下記。
+#
+#   タグ                     command            対象外の理由
+#   ----------------------   ----------------   ----------------------------------
+#   poweron / poweroff       power_on/off       数分かかる。irmc_powerstate でカバー済み
+#   cancel_shutdown          cancel_shutdown    保留が無いときの挙動が不明
+#   reset_firm               reset_firmware     iRMC 自体が再起動し、1〜2分接続不能に
+#                                               なって後続ステップが壊れる
+#
+# example playbook には無いが scci_code_map には nmi(020C)もある。
+# 稼働中の OS をクラッシュさせるので使わない。
+#
+# ############################################################################
+# opcodeext は 0x200(設置場所)に固定している。set_cs は ConfigSpace の任意の項目を
+# 書き換えられるため、opcodeext を変えると影響範囲が読めなくなる。
+# ############################################################################
+#
+# get_cs だけが読み取り専用で data を返す。set_cs を含むそれ以外は無条件に
+# changed=True(冪等判定は無い)。set_cs は data 必須(未指定なら status 10)。
+#
+# write タグの data は例示値を既定としたまま server_location で上書きできるようにしてある。
+# ハードコードのままだと arrange と act で別の値を書けず、再実行時に before と after が
+# 同じ値になってエビデンスにならないため。
+#
+# ケースは read -> write の順。read を先に流して、書き換える前の値をエビデンスに残す。
+# ファイル全体を流せば results/irmc_scci/read.txt が自動的に控えになる。
+# 未設定の機体では SNMP の既定文字列("Unknown (edit /etc/snmp/snmpd.conf)")が返る(実測)。
+#
+# 失敗経路は今回カバーしていない(必要なら expect_recap に failed: 1 を書けば検証できる)。
+#   set_cs で data 未指定 : status 10
+#   SCCI エラー           : "SCCI 'xxx' command was not successful. Return code N: ..."
+
+- module: irmc_scci
+  name: read
+  playbook: irmc_scci_examples.yml
+  steps:
+    - name: act
+      tag: read
+      expect_recap: {changed: 0, failed: 0}
+
+- module: irmc_scci
+  name: write
+  playbook: irmc_scci_examples.yml
+  steps:
+    - name: arrange
+      description: act とは別の値を書き、before/after に差が出るようにする
+      tag: write
+      vars: {server_location: "manual test - arrange"}
+    - name: before
+      tag: read
+    - name: act
+      tag: write
+      vars: {server_location: "manual test - act"}
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: read
+      expect_recap: {failed: 0}

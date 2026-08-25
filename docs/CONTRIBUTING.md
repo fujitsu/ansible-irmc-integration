@@ -54,9 +54,12 @@ This project adheres to the [Ansible Community Code of Conduct](https://docs.ans
 2. Set up the Python and Ansible execution environment. This project uses [uv](https://docs.astral.sh/uv/) to manage Python environments. Install `uv` as described in <https://docs.astral.sh/uv/getting-started/installation/>.
    uv automatically downloads and sets up the Python interpreter, so there is no need to prepare a separate Python runtime environment.
 
+  > **Note**: Older versions of `uv` may fail with an error such as `No interpreter found for Python 3.14.6` when running `uv run python` or `uv sync`.
+  > In that case, update `uv` to the latest version and retry.
+
    ```shell
    $ uv sync --dev
-   Using CPython 3.10.14
+   Using CPython 3.14.x
    Creating virtual environment at: .venv
    (snipped)
    ```
@@ -78,11 +81,11 @@ This project adheres to the [Ansible Community Code of Conduct](https://docs.ans
 
    ---
 
-   If not using uv, ensure Python 3.10 or later is installed. Create and activate a virtual environment (`venv`), then install the required libraries:
+   If not using uv, ensure Python 3.14 or later is installed. Create and activate a virtual environment (`venv`), then install the required libraries:
 
    ```shell
    $ python -V
-   Python 3.10.14
+   Python 3.14.x
    $ python -m venv .venv
    $ . .venv/bin/activate
    (.venv) $ python -m pip install -r requirements.lock -r requirements-dev.lock
@@ -102,7 +105,7 @@ This project adheres to the [Ansible Community Code of Conduct](https://docs.ans
 
    ```shell
    [defaults]
-   collections_path = ~/git
+   collections_path = ../../..
    ```
 
 4. Prepare an `inventory.ini` file. This file must include the `iRMC_group` and `windows` groups with the necessary credentials and parameters for each target node.
@@ -130,7 +133,7 @@ This project adheres to the [Ansible Community Code of Conduct](https://docs.ans
    - Test the connection to the iRMC device:
 
      ```shell
-     $ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=P@ssw0rd! validate_certs=false"
+     $ uv run ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=${IPADDR} irmc_username=${IRMC_USER} irmc_password=${IRMC_PASS} validate_certs=false"
      localhost | SUCCESS => {
          "changed": false,
          "facts": {
@@ -141,7 +144,7 @@ This project adheres to the [Ansible Community Code of Conduct](https://docs.ans
    - Test the connection to a Windows Server:
 
      ```shell
-     $ ansible -i inventory.ini windows -m ansible.windows.win_ping
+     $ uv run ansible -i inventory.ini windows -m ansible.windows.win_ping
      192.0.2.2 | SUCCESS => {
          "changed": false,
          "ping": "pong"
@@ -159,7 +162,7 @@ This project adheres to the [Ansible Community Code of Conduct](https://docs.ans
    Run the following command to execute the role that registers a license on the iRMC device:
 
    ```shell
-   ansible-playbook -i inventory.ini ./roles/irmc_set_license/tests/test.yml -e license_keys='["XXX"]' -vvv
+   uv run ansible-playbook -i inventory.ini ./roles/irmc_set_license/tests/test.yml -e '{"license_keys": ["XXX"]}' -vvv
    ```
 
    In this example, the license key (`"XXX"`) is intentionally invalid.
@@ -248,8 +251,15 @@ The following coding standards are adopted to improve efficiency and code qualit
 - To run unit tests with `ansible-test`, use the following command:
 
   ```shell
-  uv run ansible-test units --python 3.10
+  uv run ansible-test units --python 3.14
   ```
+
+### 6.3 Testing Against Real Hardware
+
+- `./tests/manual` holds a runner that executes every module against a physical PRIMERGY server.
+  It is a maintainer tool for recording evidence before a release;
+  you do not need to run it in order to contribute.
+- See [`README.md`](/tests/manual/README.md) for usage and caveats.
 
 ---
 

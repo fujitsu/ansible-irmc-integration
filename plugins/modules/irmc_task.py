@@ -17,7 +17,7 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3'
 
 version_added: "2.4"
@@ -52,39 +52,41 @@ options:
 
 EXAMPLES = r'''
 # List iRMC tasks
-- block:
-  - name: List iRMC tasks
-    fsas.primergy.irmc_task:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "list"
-    register: list
-    delegate_to: localhost
-  - name: Show list of tasks
-    debug:
-      var: list.tasks
+- name: List and show iRMC tasks
   tags:
     - list
+  block:
+    - name: List iRMC tasks
+      fsas.primergy.irmc_task:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "list"
+      register: list
+      delegate_to: localhost
+    - name: Show list of tasks
+      ansible.builtin.debug:
+        var: list.tasks
 
 # Get specific task information
-- block:
-  - name: Get specific task information
-    fsas.primergy.irmc_task:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-      id: "{{ id | int }}"
-    register: get
-    delegate_to: localhost
-  - name: Show specific task
-    debug:
-      var: get.task
+- name: Get and show a specific task
   tags:
     - get
+  block:
+    - name: Get specific task information
+      fsas.primergy.irmc_task:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+        id: "{{ id | int }}"
+      register: get
+      delegate_to: localhost
+    - name: Show specific task
+      ansible.builtin.debug:
+        var: get.task
 '''
 
 RETURN = r'''

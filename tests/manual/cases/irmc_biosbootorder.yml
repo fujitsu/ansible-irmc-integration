@@ -1,0 +1,98 @@
+---
+# irmc_biosbootorder の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ブートデバイス名は機体ごとに完全に異なり、共通のデバイスが存在しない。
+# そのため set ケースは以下の2つをこのファイルの外へ委ねている。
+#
+#   デバイス名: host_vars/<host>.yml の boot_device / boot_key
+#   対象機    : 実行時の run_tests.py --limit <ホスト>
+#
+# host_vars の boot_device には「工場出荷時の並びで先頭に来ないデバイス」を選ぶこと。
+# set ケースは arrange で default を実行してから act で set するため、先頭に来る
+# デバイスを選ぶと act の時点で既に目的の状態になっていて skip され、
+# expect_recap の changed: 1 / skipped: 0 に引っかかる。
+# 工場出荷時の並びは default ケースの after、または `--tags default` 実行後の
+# `--tags get` で確認できる。
+#
+# ここに boot_device を vars で書いてはいけない。--extra-vars として渡され、
+# 優先度の高さゆえ host_vars を上書きして全ホストが同じ値になってしまう。
+#
+# --limit を省略すると全ホストが対象になる(host_vars があるので動作は正しいが、
+# 台数分の再起動を伴う)。
+#
+# irmc_biosbootorder の set / default はサーバの電源がオフでないと実行できないため、
+# 先頭で一度だけ電源オフにする。set / default はどちらも ProfileManagement/set へ
+# @Processing: execute 付きで POST してセッション完了を待つだけで、サーバの電源を
+# オンにしないことを実機で確認済み。
+# よって arrange と act の間に電源オフを挟み直す必要はない。
+# 万一この前提が崩れた場合は act の expect_recap の skipped: 0 が検出する
+# (電源オンだと preliminary_parameter_check() が skipped で抜けるため)。
+#
+# set と default は互いの arrange になっている。default は現在値に関わらず必ず
+# changed を返すので冪等スキップは起きないが、arrange で先に set しておかないと
+# before と after が同じ内容になり「default が何を変えたか」の証拠が残らない。
+#
+# before / after の get で force_new を false にしてはいけない。
+# iRMC が rest/v1/Oem/eLCM/ProfileManagement/BiosBootOrder に保持するプロファイルは set でも
+# default でも更新されず、force_new による再生成でしか実態に追従しないため、
+# false だと過去のスナップショットが返る。実機(RX2450 M2)では act が changed=1 なのに
+# before と after が完全に同一になり、直後の force_new: true の get だけが変化を示した。
+# expect_recap は件数しか見ないので、この状態でも OK と判定してしまう。
+#
+# force_new が真だと iRMC はサーバを graceful shutdown させて BIOS パラメータを
+# バックアップし直すため、RX2450 M2 では1回7分38秒かかる(1ケースで15分超)。
+# 短縮する方法は無い。急ぐときは --limit で起動の速い機体を選ぶ。
+#
+# なお before の再生成には副次的な効果もある。example playbook の set タスクは
+# force_new を渡しておらず、モジュールの既定値は False なので、set は保存済み
+# プロファイルを基準に新しい並びを組み立てる。before で再生成しておくことで
+# act の set が実態に基づいて動く。
+
+- module: irmc_biosbootorder
+  name: get
+  playbook: irmc_biosbootorder_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_biosbootorder
+  name: set
+  playbook: irmc_biosbootorder_examples.yml
+  steps:
+    - name: arrange (power off)
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off"}
+    - name: arrange
+      description: ブート順を既定へ戻し、act が必ず変更を伴うようにする
+      tag: default
+    - name: before
+      tag: get
+    - name: act
+      description: host_vars の boot_device を先頭にする
+      tag: set
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_biosbootorder
+  name: default
+  playbook: irmc_biosbootorder_examples.yml
+  steps:
+    - name: arrange (power off)
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off"}
+    - name: arrange
+      description: host_vars の boot_device を先頭にし、default で戻る変化を作る
+      tag: set
+    - name: before
+      tag: get
+    - name: act
+      description: ブート順を工場出荷時の既定へ戻す
+      tag: default
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}

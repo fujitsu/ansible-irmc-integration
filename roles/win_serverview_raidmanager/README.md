@@ -50,7 +50,7 @@ Example Playbook
       roles:
         - role: fsas.primergy.win_serverview_raidmanager
           vars:
-            password: P@ssw0rd
+            password: <password>
             installer: "/path/to/installer/ServerView_RAID_x64.exe"
             openjdk_installer: "/path/to/installer/OpenJDK8U-jdk_x64_windows_hotspot.msi"
 

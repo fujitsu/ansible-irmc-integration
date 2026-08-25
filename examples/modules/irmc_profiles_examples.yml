@@ -8,59 +8,62 @@
 # variables not defined in this playbook are expected to be provided
 # elsewhere, e.g. in group_vars/all
 
-- name: irmc_profiles - usage examples
+- name: Usage examples for irmc_profiles
   connection: local
   hosts: iRMC_group
 
-  vars:
-    # iRMC login credentials
-    # irmc_user: "admin"
-    # irmc_password: "admin"
-    # Note: set validate_certificate to false for self-signed certificate
-    # validate_certificate: false
+  # vars:
+  #   # iRMC login credentials
+  #   irmc_user: "<username>"
+  #   irmc_password: "<password>"
+  #   # Note: set validate_certificate to false for self-signed certificate
+  #   validate_certificate: false
 
   gather_facts: false
 
   tasks:
     # List iRMC profiles
-    - block:
-      - name: List iRMC profiles
-        fsas.primergy.irmc_profiles:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "list"
-        delegate_to: localhost
-        register: list_profiles
-      - name: Show list of profiles
-        debug:
-          var: list_profiles.profiles
+    - name: List and show iRMC profiles
       tags:
         - list_profiles
+      block:
+        - name: List iRMC profiles
+          fsas.primergy.irmc_profiles:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "list"
+          delegate_to: localhost
+          register: list_profiles
+        - name: Show list of profiles
+          ansible.builtin.debug:
+            var: list_profiles.profiles
 
     # Get specific profile
-    - block:
-      - name: Get specific profile
-        fsas.primergy.irmc_profiles:
-          irmc_url: "{{ inventory_hostname }}"
-          irmc_username: "{{ irmc_user }}"
-          irmc_password: "{{ irmc_password }}"
-          validate_certs: "{{ validate_certificate }}"
-          command: "get"
-          profile: "{{ profile_name }}"
-        delegate_to: localhost
-        register: get_profile
-      - name: Show specific profile
-        debug:
-          var: get_profile.profile
-      - name: Save profile as JSON file into /tmp directory
-        copy:
-          content: "{{ get_profile.profile | to_nice_json }}"
-          dest: "/tmp/{{ profile_name }}.json"
-        delegate_to: localhost
+    - name: Get, show and save a specific profile
       tags:
         - get_profile
+      block:
+        - name: Get specific profile
+          fsas.primergy.irmc_profiles:
+            irmc_url: "{{ inventory_hostname }}"
+            irmc_username: "{{ irmc_user }}"
+            irmc_password: "{{ irmc_password }}"
+            validate_certs: "{{ validate_certificate }}"
+            command: "get"
+            profile: "{{ profile_name }}"
+          delegate_to: localhost
+          register: get_profile
+        - name: Show specific profile
+          ansible.builtin.debug:
+            var: get_profile.profile
+        - name: Save profile as JSON file into /tmp directory
+          ansible.builtin.copy:
+            content: "{{ get_profile.profile | to_nice_json }}"
+            dest: "/tmp/{{ profile_name }}.json"
+            mode: "0600"
+          delegate_to: localhost
 
     # Create profile
     - name: Create profile

@@ -63,9 +63,12 @@
    `uv`コマンドのインストールについては <https://docs.astral.sh/uv/getting-started/installation/> を参照してください。
    uvはPythonインタープリタのダウンロードも行いますので、Python実行環境を用意する必要はありません。
 
+  > **注意**: 古いバージョンの`uv`では、`uv run python`や`uv sync`実行時に`No interpreter found for Python 3.14.6`のようなエラーが発生することがあります。
+  > その場合は`uv`を最新版に更新してから再試行してください。
+
    ```shell
    $ uv sync --dev
-   Using CPython 3.10.14
+   Using CPython 3.14.x
    Creating virtual environment at: .venv
    （略）
    ```
@@ -89,12 +92,12 @@
 
    ---
 
-   uvを使わず環境構築する場合はPython3.10以降のPython実行環境を用意してください。
+   uvを使わず環境構築する場合はPython3.14以降のPython実行環境を用意してください。
    仮想環境（venv）を作成・有効化してから、必要なライブラリをインストールしてください。
 
    ```shell
    $ python -V
-   Python 3.10.14
+   Python 3.14.x
    $ python -m venv .venv
    $ . .venv/bin/activate
    (.venv) $ python -m pip install -r requirements.lock -r requirements-dev.lock
@@ -114,7 +117,7 @@
 
    ```ini
    [defaults]
-   collections_path = ~/git
+   collections_path = ../../..
    ```
 
 4. `inventory.ini`ファイルを用意してください。
@@ -145,7 +148,7 @@
    - iRMC機器への疎通テストをします：
 
      ```shell
-     $ ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=192.0.2.1 irmc_username=admin irmc_password=P@ssw0rd! validate_certs=false"
+     $ uv run ansible localhost -m fsas.primergy.irmc_facts -a "irmc_url=${IPADDR} irmc_username=${IRMC_USER} irmc_password=${IRMC_PASS} validate_certs=false"
      localhost | SUCCESS => {
          "changed": false,
          "facts": {
@@ -156,7 +159,7 @@
    - Windowsサーバーへの疎通テストをします：
 
      ```shell
-     $ ansible -i inventory.ini windows -m ansible.windows.win_ping
+     $ uv run ansible -i inventory.ini windows -m ansible.windows.win_ping
      192.0.2.2 | SUCCESS => {
          "changed": false,
          "ping": "pong"
@@ -175,7 +178,7 @@
    iRMC機器にライセンスを登録するロールを実行します：
 
    ```shell
-   ansible-playbook -i inventory.ini ./roles/irmc_set_license/tests/test.yml -e license_keys='["XXX"]' -vvv
+   uv run ansible-playbook -i inventory.ini ./roles/irmc_set_license/tests/test.yml -e '{"license_keys": ["XXX"]}' -vvv
    ```
 
    この例で登録しようとしているライセンス（`"XXX"`）は正しく無いので、
@@ -271,8 +274,15 @@
 - `ansible-test`によるユニットテストの実行方法は以下の通りです：
 
   ```shell
-  uv run ansible-test units --python 3.10
+  uv run ansible-test units --python 3.14
   ```
+
+### 6.3 実機テスト
+
+- 実機のPRIMERGYサーバへ全モジュールを流すランナーを`./tests/manual`に置いています。
+  リリース前にエビデンスを残すためのメンテナ向けのツールで、
+  コントリビュートのために実行する必要はありません。
+- 使い方と注意事項は [`README_ja.md`](/tests/manual/README_ja.md) を参照してください。
 
 ---
 

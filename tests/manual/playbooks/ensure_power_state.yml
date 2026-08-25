@@ -1,0 +1,94 @@
+---
+# Copyright 2018-2026 Fsas Technologies Inc.
+# GNU General Public License v3.0+ (see [LICENSE.md](LICENSE.md) or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+# tests/manual/run_tests.py がテストケースの前提条件を揃えるために使う運用playbook。
+# examples/ 配下のサンプルとは役割が異なるためこのディレクトリに置く。
+#
+# hosts: iRMC_group なので inventory に登録された全ホストへ自動的に適用される。
+#
+# 使い方:
+#   ansible-playbook tests/manual/playbooks/ensure_power_state.yml -i inventory.ini \
+#     --extra-vars '{"desired_power_state": "Off"}'
+#
+#   電源状態が確定した後にさらに待たせたい場合(末尾のタスクの注記を参照):
+#     --extra-vars '{"desired_power_state": "Off", "power_settle_seconds": 60}'
+#
+# desired_power_state が唯一の必須入力で、値は "Off" または "On"。
+# irmc_powerstate は set と get で語彙が異なる(set の state は "PowerOff"/"PowerOn"、
+# get の power_state は Redfish PowerState の "Off"/"On")ため、reset_types で対応付ける。
+# 三項演算子ではなく辞書引きにしているのは、"off" のような値の誤りを未定義キーの
+# エラーとして即座に検出するため。
+
+- name: Ensure iRMC server power state
+  connection: local
+  hosts: iRMC_group
+  gather_facts: false
+
+  vars:
+    # desired_power_state は --extra-vars で渡される
+    reset_types:
+      "Off": "PowerOff"
+      "On": "PowerOn"
+    reset_type: "{{ reset_types[desired_power_state] }}"
+    # irmc_powerstate が結果に必ず含める status のうち、要求が受け入れられたと見なす値。
+    #   0  = 成功、または既に目的の状態(skipped)
+    #   11 = 遷移中で今はその状態にできない('X' is not allowed now)
+    # これ以外(20 = iRMC 未応答、99 = 通信エラー など)は本物の失敗。
+    acceptable_request_status: [0, 11]
+
+  tasks:
+    # 既に目的の状態なら irmc_powerstate 側が skipped で正常終了するため冪等に呼べる。
+    #
+    # 判定に failed ではなく status を使うのは、failed_when が result.failed を書き換えてしまい
+    # until との組み合わせが読みにくくなるため。status なら意図をそのまま書ける。
+    # 待ち時間は host_vars で機体別に延ばせるよう、play の vars ではなくここで default() を使う
+    # (play vars は host_vars より優先度が高く、host_vars から上書きできない)。
+    - name: Request power state change
+      fsas.primergy.irmc_powerstate:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "set"
+        state: "{{ reset_type }}"
+      register: power_request
+      until: power_request.status | default(99) in acceptable_request_status
+      retries: "{{ power_request_retries | default(5) }}"
+      delay: "{{ power_request_delay | default(10) }}"
+      failed_when: power_request.status | default(99) not in acceptable_request_status
+      delegate_to: localhost
+
+    # 遷移中で要求が受け入れられなかった場合、その理由をエビデンスに残す
+    - name: Show why the power state change was not accepted
+      ansible.builtin.debug:
+        var: power_request.msg
+      when: power_request.status | default(0) == 11
+      delegate_to: localhost
+
+    # 遷移中は PoweringOff / PoweringOn が返るため、落ち着くまでポーリングする
+    - name: Wait until power state settles
+      fsas.primergy.irmc_powerstate:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: powerstate
+      until: powerstate.power_state == desired_power_state
+      retries: "{{ power_wait_retries | default(30) }}"
+      delay: "{{ power_wait_delay | default(10) }}"
+      delegate_to: localhost
+
+    # iRMC が Off を返しても、直前まで通電していた場合は POST 完了フラグなどの内部状態が
+    # 残っていることがある。この状態で eLCM の OOB RAID Config を走らせると、電源投入
+    # 5秒後に 'BIOS POST already completed' と誤認し、初期化前のコントローラへ問い合わせて
+    # 'Get ctrlProp error' で失敗する(irmc_raid の delete で実測。この機体の POST は約1分40秒)。
+    #
+    # 上の power_wait_* / power_request_* と違い、これは機体差ではなくケース側の要求なので
+    # host_vars ではなくケース定義の vars で渡す。pause は BYPASS_HOST_LOOP なので play で
+    # 1回だけ実行され、ホスト数に関わらず待ち時間は一定。
+    - name: Let the hardware settle
+      ansible.builtin.pause:
+        seconds: "{{ power_settle_seconds | default(0) | int }}"
+      when: power_settle_seconds | default(0) | int > 0

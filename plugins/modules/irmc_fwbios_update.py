@@ -18,7 +18,7 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
     - Python modules 'requests', 'urllib3', 'requests_toolbelt'
 
 version_added: "2.4"
@@ -91,85 +91,89 @@ options:
 
 EXAMPLES = r'''
 # Get irmc firmware and BIOS update settings
-- block:
-  - name: Get irmc firmware and BIOS update settings
-    fsas.primergy.irmc_fwbios_update:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "get"
-    register: fw_settings
-    delegate_to: localhost
-  - name: Show irmc firmware and BIOS update settings
-    debug:
-      var: fw_settings.fw_update_configuration
+- name: Get and show irmc firmware and BIOS update settings
   tags:
     - get_fw
+  block:
+    - name: Get irmc firmware and BIOS update settings
+      fsas.primergy.irmc_fwbios_update:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "get"
+      register: fw_settings
+      delegate_to: localhost
+    - name: Show irmc firmware and BIOS update settings
+      ansible.builtin.debug:
+        var: fw_settings.fw_update_configuration
 
 # Update server BIOS from local file
-- block:
-  - name: Update server BIOS from local file
-    fsas.primergy.irmc_fwbios_update:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "update"
-      update_source: "file"
-      update_type: "bios"
-      file_name: "{{ bios_filename }}"
-    delegate_to: localhost
-    register: bios_update_file
-  - name: Show bios update from local file result
-    debug:
-      var: bios_update_file
+- name: Update server BIOS from local file and show the result
   tags:
     - update_bios_file
+  block:
+    - name: Update server BIOS from local file
+      fsas.primergy.irmc_fwbios_update:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "update"
+        update_source: "file"
+        update_type: "bios"
+        file_name: "{{ bios_filename }}"
+      delegate_to: localhost
+      register: bios_update_file
+    - name: Show bios update from local file result
+      ansible.builtin.debug:
+        var: bios_update_file
 
 # Update server BIOS via TFTP
-- block:
-  - name: Update server BIOS via TFTP
-    fsas.primergy.irmc_fwbios_update:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "update"
-      update_source: "tftp"
-      update_type: "bios"
-      server_name: "{{ tftp_server }}"
-      file_name: "{{ bios_filename }}"
-    delegate_to: localhost
-    register: bios_update_tftp
-  - name: Show bios update via TFTP result
-    debug:
-      var: bios_update_tftp
+- name: Update server BIOS via TFTP and show the result
   tags:
     - update_bios_tftp
+  block:
+    - name: Update server BIOS via TFTP
+      fsas.primergy.irmc_fwbios_update:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "update"
+        update_source: "tftp"
+        update_type: "bios"
+        server_name: "{{ tftp_server }}"
+        file_name: "{{ bios_filename }}"
+      delegate_to: localhost
+      register: bios_update_tftp
+    - name: Show bios update via TFTP result
+      ansible.builtin.debug:
+        var: bios_update_tftp
 
 # Update iRMC FW via TFTP
-- block:
-  - name: Update iRMC FW via TFTP
-    fsas.primergy.irmc_fwbios_update:
-      irmc_url: "{{ inventory_hostname }}"
-      irmc_username: "{{ irmc_user }}"
-      irmc_password: "{{ irmc_password }}"
-      validate_certs: "{{ validate_certificate }}"
-      command: "update"
-      update_source: "tftp"
-      update_type: "irmc"
-      server_name: "{{ tftp_server }}"
-      file_name: "{{ irmc_filename }}"
-      irmc_flash_selector: "Auto"
-      irmc_boot_selector: "Auto"
-    delegate_to: localhost
-    register: irmc_update_tftp
-  - name: Show irmc update via TFTP result
-    debug:
-      var: irmc_update_tftp
+- name: Update iRMC FW via TFTP and show the result
   tags:
     - update_irmc_tftp
+  block:
+    - name: Update iRMC FW via TFTP
+      fsas.primergy.irmc_fwbios_update:
+        irmc_url: "{{ inventory_hostname }}"
+        irmc_username: "{{ irmc_user }}"
+        irmc_password: "{{ irmc_password }}"
+        validate_certs: "{{ validate_certificate }}"
+        command: "update"
+        update_source: "tftp"
+        update_type: "irmc"
+        server_name: "{{ tftp_server }}"
+        file_name: "{{ irmc_filename }}"
+        irmc_flash_selector: "Auto"
+        irmc_boot_selector: "Auto"
+      delegate_to: localhost
+      register: irmc_update_tftp
+    - name: Show irmc update via TFTP result
+      ansible.builtin.debug:
+        var: irmc_update_tftp
 '''
 
 RETURN = r'''
@@ -399,7 +403,7 @@ def preliminary_parameter_check(module, irmc, result):
 
             if dig(sysdata, 'PowerState') == 'On':
                 result['skipped'] = True
-                result['warnings'] = 'Server is powered on. Cannot continue.'
+                module.warn('Server is powered on. Cannot continue.')
                 module.exit_json(**result)
 
 
@@ -442,16 +446,13 @@ def wait_for_update_to_finish(module, irmc, location, power_state, result):
             state = dig(sdata, 'TaskState')
             # make sure the process ran through
             if power_state == 'On' and oemstate == 'Pending':
-                msg = 'A BIOS firmware update has been started and a system reboot is required to continue the update.'
-                result['warnings'] = msg
+                module.warn('A BIOS firmware update has been started and a system reboot is required to continue the update.')
                 break
             if power_state == 'On' and oemstate == 'FlashImageDownloadedSuccessfully':
-                msg = 'A BIOS firmware update has been started. A system reboot is required to continue the update.'
-                result['warnings'] = msg
+                module.warn('A BIOS firmware update has been started. A system reboot is required to continue the update.')
                 break
             if power_state == 'On' and oemstate == 'FlashingFinishedSuccessfullyRebootRequired':
-                msg = 'A iRMC firmware update has finished. A system reboot is required to activate the update.'
-                result['warnings'] = msg
+                module.warn('A iRMC firmware update has finished. A system reboot is required to activate the update.')
                 break
             if state == 'Exception':
                 msg = f'{now}: Update failed.'

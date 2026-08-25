@@ -16,7 +16,7 @@ description:
 requirements:
     - The module needs to run locally.
     - iRMC S6.
-    - Python >= 3.10
+    - Python >= 3.14
 
 version_added: "2.4"
 
@@ -44,40 +44,42 @@ options:
 
 EXAMPLES = '''
 # Compare iRMC profiles against each other via json files
-- block:
-  - name: Compare iRMC profiles by file
-    fsas.primergy.irmc_compare_profiles:
-      profile_path1: "{{ profile1_path }}"
-      profile_path2: "{{ profile2_path }}"
-    delegate_to: localhost
-    register: result
-  - name: Show comparison result
-    debug:
-      var: result.comparison_result
-  - name: Show comparison list
-    debug:
-      var: result.comparison_list
-    when: result.comparison_list is defined
+- name: Compare iRMC profiles by file and show the result
   tags:
     - path
+  block:
+    - name: Compare iRMC profiles by file
+      fsas.primergy.irmc_compare_profiles:
+        profile_path1: "{{ profile1_path }}"
+        profile_path2: "{{ profile2_path }}"
+      delegate_to: localhost
+      register: result
+    - name: Show comparison result
+      ansible.builtin.debug:
+        var: result.comparison_result
+    - name: Show comparison list
+      ansible.builtin.debug:
+        var: result.comparison_list
+      when: result.comparison_list is defined
 
 # Compare iRMC profiles against each other via json string
-- block:
-  - name: Compare iRMC profiles by json
-    fsas.primergy.irmc_compare_profiles:
-      profile_json1: "{{ profile_json1 }}"
-      profile_json2: "{{ profile_json2 }}"
-    delegate_to: localhost
-    register: result
-  - name: Show comparison result
-    debug:
-      var: result.comparison_result
-  - name: Show comparison list
-    debug:
-      var: result.comparison_list
-    when: result.comparison_list is defined
+- name: Compare iRMC profiles by json and show the result
   tags:
     - json
+  block:
+    - name: Compare iRMC profiles by json
+      fsas.primergy.irmc_compare_profiles:
+        profile_json1: "{{ profile_json1 }}"
+        profile_json2: "{{ profile_json2 }}"
+      delegate_to: localhost
+      register: result
+    - name: Show comparison result
+      ansible.builtin.debug:
+        var: result.comparison_result
+    - name: Show comparison list
+      ansible.builtin.debug:
+        var: result.comparison_list
+      when: result.comparison_list is defined
 '''
 
 RETURN = '''

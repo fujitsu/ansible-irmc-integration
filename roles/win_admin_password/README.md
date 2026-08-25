@@ -30,7 +30,7 @@ Example Playbook
       roles:
         - role: fsas.primergy.win_admin_password
           vars:
-            password: NewP@ssw0rd
+            password: <new-password>
 
 License
 -------

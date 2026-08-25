@@ -1,0 +1,125 @@
+---
+# irmc_raid の手動テストケース定義。
+# スキーマは tests/manual/README_ja.md を参照。
+#
+# ############################################################################
+# 警告: このケースは RAID アレイを実際に削除する。論理ドライブ上のデータは失われる。
+#       OS が載っているアダプタでは絶対に実行しないこと。
+#       対象アダプタは host_vars/<host>.yml の adapter で決まる。
+# ############################################################################
+#
+# 機体固有の値は host_vars/<host>.yml から供給する。
+#
+#   adapter: アレイを作成・削除するアダプタの論理番号(get の出力の "RAIDAdapter1" なら 1)
+#   level  : 作成するアレイの RAID レベル
+#   array  : 削除するアレイの論理番号
+#
+# 電源動作特性(実機で確認済み):
+#
+#   タグ     電源オン時          電源オフ時                    終了時の電源
+#   ------   -----------------   ---------------------------   ------------
+#   get      そのまま            電源オン→オフ                開始時と同じ
+#   create   失敗                電源オン→create→電源オフ    オフ
+#   delete   失敗                電源オン→delete→電源オフ    オフ
+#
+# create / delete は電源オフで終わり、get は状態を保つ。よってケースの先頭で一度だけ
+# 電源オフにすれば、以降のステップは追加の電源操作なしで繋がる。
+#
+# ############################################################################
+# 電源オフ直後に RAID 操作を始めると iRMC 側で失敗することがある(実測)。
+# そのため arrange (power off) に power_settle_seconds: 60 を渡している。
+#
+# 実際の失敗: arrange (clear) が status 29 で failed。iRMC のセッションログは
+#
+#   createRaidDatabase: Get RAID controller information start [RAID controller count = 2 ]
+#   createRaidDatabase: Get ctrlProp error
+#   ApplyProfileParameters: Get RAID Adapter Information failed
+#
+# 原因は POST 完了の誤認と見ている。同じログで
+# 'System PowerOn by OOB Raid Config' から 'BIOS POST already completed' までが
+# わずか5秒だった。この機体の POST は約1分40秒(README の起動時間の表)なので、実際に
+# POST したのではなく直前の起動で立ったフラグが残っていた。初期化前のコントローラへ
+# ctrlProp を問い合わせて失敗している。
+#
+# 60秒は最初の見積もり。また同じ失敗が出たらセッションログの
+# 'System PowerOn by OOB Raid Config' と 'BIOS POST already completed' の間隔を見る。
+# まだ5秒程度なら待ちが足りないので増やす。1分以上空いていれば POST 誤認は解消して
+# いるので別の原因を探す。
+#
+# なお status 29 はモジュール側の意味を持たない。irmc.py:352 でセッション状態に 'error'
+# が含まれたときに立ち、直後に取得したセッションログが fail_json の log に載るだけ。
+#
+# アダプタ1が OOB 構成に対応していないわけではない。get の出力に論理ドライブ 'TestRaid'
+# が RAIDAdapter1 に存在しており、これは下の create ケースがハードコードしている名前
+# なので、過去に同じケースがアダプタ1で作成に成功している。よって間欠的な失敗として扱う。
+# ############################################################################
+#
+# 電源オンのとき create / delete は preliminary_parameter_check() が fail_json するため
+# skipped ではなく failed になる(irmc_biosbootorder が skipped で抜けるのとは異なる)。
+# expect_recap は failed: 0 で捕まえる。
+#
+# arrange に delete の array: -1 を使うのは、これが唯一冪等な削除だから。
+# delete_array() はアレイが1つも無いとき array == '-1' なら skipped で正常終了するが、
+# 特定の番号を指定すると fail_json(status 51) する。
+# また create_array() は未使用ディスクが無いと fail_json(status 41) するため、
+# create の前には必ず全アレイを削除して未使用ディスクを確保する必要がある。
+#
+# get / create / delete はいずれも1回あたりサーバの起動を伴う。delete ケースは5回、
+# create ケースは4回の起動が発生するため、1ケースで十数分から数十分かかる。
+#
+# ケースは get → delete → create の順に並べてある。ファイル全体を流したときに
+# アレイが存在する状態で終わるようにするため。
+
+- module: irmc_raid
+  name: get
+  playbook: irmc_raid_examples.yml
+  steps:
+    - name: act
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_raid
+  name: delete
+  playbook: irmc_raid_examples.yml
+  steps:
+    - name: arrange (power off)
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off", power_settle_seconds: 60}
+    - name: arrange (clear)
+      description: 全アレイを削除し、次の create が未使用ディスクを確保できるようにする
+      tag: delete
+      vars: {array: "-1"}
+    - name: arrange
+      description: 削除対象のアレイを作る
+      tag: create
+    - name: before
+      tag: get
+    - name: act
+      description: host_vars の array で指定したアレイを削除する
+      tag: delete
+      expect_recap: {changed: 1, failed: 0, skipped: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}
+
+- module: irmc_raid
+  name: create
+  playbook: irmc_raid_examples.yml
+  steps:
+    - name: arrange (power off)
+      playbook: tests/manual/playbooks/ensure_power_state.yml
+      vars: {desired_power_state: "Off", power_settle_seconds: 60}
+    - name: arrange
+      description: 全アレイを削除して未使用ディスクを確保し、act の create が通るようにする
+      tag: delete
+      vars: {array: "-1"}
+    - name: before
+      tag: get
+    - name: act
+      description: host_vars の adapter / level でアレイを作る
+      tag: create
+      vars: {name: "TestRaid"}
+      expect_recap: {changed: 1, failed: 0}
+    - name: after
+      tag: get
+      expect_recap: {failed: 0}
